@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <!-- Note that the trailing '\' is needed on these paths! -->    
+    <!-- Path to the Mastercam C-Hook SDK (Required). -->
+    <SDKDir>C:\Program Files\Mastercam 2022\Mastercam\sdk\</SDKDir>
+    <!-- Path to the Mastercam Product install -->
+    <!-- Used when running in Debug. -->
+    <!-- Used when installing with the Post-Build Event to the to the 'chooks' folder. -->
+	<MastercamDir>C:\Program Files\Mastercam 2022\Mastercam\</MastercamDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <BuildMacro Include="SDKDir">
+      <Value>$(SDKDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="MastercamDir">
+      <Value>$(MastercamDir)</Value>
+    </BuildMacro>	  
+  </ItemGroup>
+</Project>
+

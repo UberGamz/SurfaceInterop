@@ -1,0 +1,34 @@
+###############################################################################
+# NET-Hook function table
+###############################################################################
+#
+# Name		: ClientAddIn.ft
+# NETHook 	: ClientAddIn.dll
+###############################################################################
+
+######################
+# ASSIGN A UNIQUE NAME
+######################
+APPLICATION "ClientAddInClientSampleNETHook"
+
+######################
+# NET-Hook LOCATION
+######################
+#
+# Update paths below to match your install path and project name.
+FUNC_DLL   "ClientAddIn.dll"
+RES_DLL    "SAME"
+dnRES_NAME "ClientAddIn.Properties.Resources"
+CATEGORY   "Add-In Example"
+
+##############################################################################
+# Public functions here
+##############################################################################
+#
+# The main entry point defined in NET-Hook DLL
+FUNCTION NET "Run"
+    dnSPNG "Icon16"
+    dnLPNG "Icon32"
+    dnTIP  "TipString"
+END_FUNCTION
+
