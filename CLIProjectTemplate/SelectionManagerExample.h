@@ -58,8 +58,7 @@ namespace Mastercam::IO::Interop {
 		}
 		static bool SelectionManager::AlterContourFinish(double maxStepdown, double minDepth, double maxDepth)
 		{
-
-			for (auto index = 0; index < TpMainOpMgr.GetMainOpList().GetSize(); ++index)
+			for (auto index = 0; index < TpMainOpMgr.GetMainOpList().GetSize(); ++index)            
 			{
 				auto op = TpMainOpMgr.GetMainOpList()[index];
 				if (op && (op->opcode == TP_SRF_FIN_CONTOUR

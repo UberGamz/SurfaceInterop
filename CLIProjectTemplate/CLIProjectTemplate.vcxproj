@@ -51,7 +51,7 @@
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectName>CLIProjectTemplate</ProjectName>
+    <ProjectName>SurfaceTPDepthsInterop</ProjectName>
     <ProjectGuid>{dbbd0bd3-4589-4d60-a308-7d969ae4eec5}</ProjectGuid>
     <RootNamespace>CLIProjectTemplate</RootNamespace>
     <Keyword>MFCDLLProj</Keyword>
