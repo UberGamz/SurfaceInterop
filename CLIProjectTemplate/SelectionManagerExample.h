@@ -4,6 +4,8 @@
 // <summary>Declares the SelectionManager class</summary>
 
 // This class demonstrates using Mastercam NET-Hook API and a C++ methods from a C++/CLI project.
+#include "NETHookApiReflection.h"
+#include "SolidsExtrude_CH.h"
 #include "m_mill.h"
 #pragma comment(lib,"MCMill.lib")
 #pragma once
@@ -28,6 +30,7 @@ namespace Mastercam::IO::Interop {
 		///
 		/// <returns> ID of created geometry. </returns>
 		static int SelectionManager::CreateGeometry();
+
 
 		/// <summary> This method retrieves the entity of the geometry and do a translation. </summary>
 		///
@@ -102,6 +105,39 @@ namespace Mastercam::IO::Interop {
 			}
 			return true;
 		};
+		bool SelectionManager::DoSolidExtrude(Mastercam::Database::Chain^ chain, System::String^ solidName)
+		{
+			auto result = false;
+
+			if (chain)
+			{
+				// "convert" the managed Chain to a native CHAIN (pointer)
+				auto pChain = GetNativeChain(chain);
+
+				// "convert" the managed String to CString
+				// If the supplied name is null or empty, initialize to a "blank" string
+				CString name = (!System::String::IsNullOrEmpty(solidName)) ? CString(solidName) : L"";
+
+				// See SLD_EXTRUDE_PARAMS in sldTypes_CH.h
+				// Starting in Mastercam 2022 the constructor for SLD_EXTRUDE_PARAMS initializes defaults.
+				auto extrudeParams = std::make_shared<SLD_EXTRUDE_PARAMS>();
+				extrudeParams->distance = 2.5;
+				result = sld_extrude_from_chain(pChain, *extrudeParams, 0, nullptr, name.GetBuffer());
+				name.ReleaseBuffer();
+			}
+
+			return result;
+		}
+		CHAIN* SelectionManager::GetNativeChain(Mastercam::Database::Chain^ chain)
+		{
+			System::Reflection::Pointer^ cPtr = NETHookApiReflection::GetFieldValue(chain, "Data");
+			if (cPtr)
+			{
+				return static_cast<CHAIN*> (System::Reflection::Pointer::Unbox(cPtr));
+			}
+
+			return nullptr;
+		}
 	}
 	;
 }
