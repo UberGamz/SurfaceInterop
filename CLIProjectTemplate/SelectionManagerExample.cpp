@@ -8,6 +8,8 @@
 
 #include "stdafx.h"
 #include "SelectionManagerExample.h"
+#include "NETHookApiReflection.h"
+
 using namespace Mastercam::BasicGeometry;
 using namespace Mastercam::Curves;
 

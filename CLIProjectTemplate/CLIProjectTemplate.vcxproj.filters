@@ -42,7 +42,7 @@
     <ClCompile Include="..\..\..\..\Documents\main_example.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\Documents\NETHookApiReflection.cpp">
+    <ClCompile Include="NETHookApiReflection.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -59,7 +59,7 @@
     <ClInclude Include="ResourceReaderService.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\Documents\NETHookApiReflection.h">
+    <ClInclude Include="NETHookApiReflection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -12,7 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\Documents\main_example.cpp" />
-    <ClCompile Include="..\..\..\..\Documents\NETHookApiReflection.cpp" />
+    <ClCompile Include="NETHookApiReflection.cpp" />
     <ClCompile Include="SelectionManagerExample.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ResourceReaderService.cpp" />
@@ -22,7 +22,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\Documents\NETHookApiReflection.h" />
+    <ClInclude Include="NETHookApiReflection.h" />
     <ClInclude Include="SelectionManagerExample.h" />
     <ClInclude Include="ResourceReaderService.h" />
     <ClInclude Include="resource.h" />

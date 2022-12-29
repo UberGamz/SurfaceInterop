@@ -19,6 +19,7 @@
 #include "stdafx.h"
 #include "ResourceReaderService.h"
 #include "SelectionManagerExample.h"
+#include "NETHookApiReflection.h"
 
 // -------------------------------------------
 // ---- C-Hook style entry point functions ---
