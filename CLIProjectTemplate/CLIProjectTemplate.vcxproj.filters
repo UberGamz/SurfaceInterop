@@ -39,9 +39,6 @@
     <ClCompile Include="ResourceReaderService.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\Documents\main_example.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="NETHookApiReflection.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

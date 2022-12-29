@@ -105,7 +105,7 @@ namespace Mastercam::IO::Interop {
 			}
 			return true;
 		};
-		bool SelectionManager::DoSolidExtrude(Mastercam::Database::Chain^ chain, System::String^ solidName)
+		static bool SelectionManager::DoSolidExtrudeCreate(Mastercam::Database::Chain^ chain, double distance)
 		{
 			auto result = false;
 
@@ -116,19 +116,94 @@ namespace Mastercam::IO::Interop {
 
 				// "convert" the managed String to CString
 				// If the supplied name is null or empty, initialize to a "blank" string
+				System::String^ solidName;
 				CString name = (!System::String::IsNullOrEmpty(solidName)) ? CString(solidName) : L"";
 
 				// See SLD_EXTRUDE_PARAMS in sldTypes_CH.h
 				// Starting in Mastercam 2022 the constructor for SLD_EXTRUDE_PARAMS initializes defaults.
-				auto extrudeParams = std::make_shared<SLD_EXTRUDE_PARAMS>();
-				extrudeParams->distance = 2.5;
-				result = sld_extrude_from_chain(pChain, *extrudeParams, 0, nullptr, name.GetBuffer());
+
+				SLD_DRAFT_PARAMS draftParams;
+				draftParams.add = false;
+				SLD_THINWALL_PARAMS thinwallParams;
+				thinwallParams.doThinWall = false;
+				SLD_EXTRUDE_PARAMS extrudeParams;
+				extrudeParams.creationType = 0;
+				//extrudeParams.body = ?;
+				extrudeParams.distMethod = 0;
+				extrudeParams.distance = distance;
+				//extrudeParams.local = ?;
+				extrudeParams.direction = p_3di(1.0, 0.0, 0.0);
+				extrudeParams.reverseDir = true;
+				extrudeParams.bothDir = false;
+				extrudeParams.splitDraft = false;
+				extrudeParams.draftEnds = false;
+				extrudeParams.flipOutward = false;
+				extrudeParams.draft = draftParams;
+				extrudeParams.thinwall = thinwallParams;
+
+				//auto solidResult = sld_new_extrude(pChain,extrudeParams);
+				result = sld_extrude_from_chain(pChain, extrudeParams, 0, nullptr, name.GetBuffer());
 				name.ReleaseBuffer();
 			}
 
 			return result;
 		}
-		CHAIN* SelectionManager::GetNativeChain(Mastercam::Database::Chain^ chain)
+		static bool SelectionManager::DoSolidExtrudeCut(Mastercam::Database::Chain^ chain, double distance, int geoID)
+		{
+			auto result = false;
+			auto succf = true;
+
+
+			if (chain)
+			{
+
+
+				// "convert" the managed Chain to a native CHAIN (pointer)
+				auto pChain = GetNativeChain(chain);
+
+				// "convert" the managed String to CString
+				// If the supplied name is null or empty, initialize to a "blank" string
+				System::String^ solidName;
+				CString name = (!System::String::IsNullOrEmpty(solidName)) ? CString(solidName) : L"";
+
+				// See SLD_EXTRUDE_PARAMS in sldTypes_CH.h
+				// Starting in Mastercam 2022 the constructor for SLD_EXTRUDE_PARAMS initializes defaults.
+				
+				;
+
+				SLD_DRAFT_PARAMS draftParams;
+				draftParams.add = false;
+				SLD_THINWALL_PARAMS thinwallParams;
+				thinwallParams.doThinWall = false;
+				SLD_EXTRUDE_PARAMS extrudeParams;
+
+				DB_LIST_ENT_PTR body = nullptr;
+				auto spEntity = std::make_unique<ent>();
+				GetEntityByID(geoID, *spEntity, &succf);
+				extrudeParams.body = spEntity->eptr;
+
+
+
+				extrudeParams.creationType = 1;
+				extrudeParams.distMethod = 0;
+				extrudeParams.distance = distance;
+				//extrudeParams.local = ?;
+				extrudeParams.direction = p_3di(1.0, 0.0, 0.0);
+				extrudeParams.reverseDir = true;
+				extrudeParams.bothDir = false;
+				extrudeParams.splitDraft = false;
+				extrudeParams.draftEnds = false;
+				extrudeParams.flipOutward = false;
+				extrudeParams.draft = draftParams;
+				extrudeParams.thinwall = thinwallParams;
+
+				result = sld_extrude_from_chain(pChain, extrudeParams, 0, nullptr, name.GetBuffer());
+				name.ReleaseBuffer();
+			}
+
+			return result;
+		}
+		static CHAIN* SelectionManager::GetNativeChain(Mastercam::Database::Chain^ chain)
 		{
 			System::Reflection::Pointer^ cPtr = NETHookApiReflection::GetFieldValue(chain, "Data");
 			if (cPtr)
