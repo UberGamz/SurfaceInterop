@@ -12,6 +12,7 @@
 #include "m_mill.h"
 #include "cmaPoint2D_CH.h"
 #include "BaseTypes_CH.h"
+#include "Assoc_CH.h"
 
 #pragma comment(lib,"MCMill.lib")
 #pragma once
@@ -221,66 +222,51 @@ namespace Mastercam::IO::Interop {
 		}
 		static int SelectionManager::Intersect(Mastercam::Database::Geometry^ GEO1, Mastercam::Database::Geometry^ GEO2) {
 
-			EptrArray geomEptrs;
-			EptrArray geomEptrs2;
-			DB_LIST_ENT_PTR firstGeo;
-			DB_LIST_ENT_PTR secondGeo;
-			NoStackEnt(firstGeoID);
-			NoStackEnt(secondGeoID);
-			firstGeoID.ent_idn = GEO1->GetEntityID();
-			secondGeoID.ent_idn = GEO1->GetEntityID();
-			geomEptrs.Add(firstGeoID.eptr, UT_START);
-			geomEptrs2.Add(secondGeoID.eptr, UT_START);
-			ent freshNewGuy;
-			get_ent_from_eptr(firstGeoID.eptr, &freshNewGuy);
-
-			System::Windows::Forms::MessageBox::Show(freshNewGuy.id.ToString());
+			p_2di biasPt;
+			bool successful;
+			auto firstEnt = std::make_unique<ent>();
+			auto secondEnt = std::make_unique<ent>();
+			GetEntityByID(GEO1->GetEntityID(), *firstEnt, &successful);
+			GetEntityByID(GEO2->GetEntityID(), *secondEnt, &successful);
 
 			std::vector<gt> firstEntity;
 			ent firstNewGuy;
-			if (get_ent_from_eptr(geomEptrs[UT_START], &firstNewGuy) == 0) {
-				System::Windows::Forms::MessageBox::Show("ent found");
-				if (firstNewGuy.id == L_ID) {
+				if (firstEnt->id == L_ID) {
 					gt tempEnt;
 					tempEnt.id = 'L';
-					tempEnt.u.li.e1 = firstNewGuy.u.li.e1.ConvertTo2d();
-					tempEnt.u.li.e2 = firstNewGuy.u.li.e2.ConvertTo2d();
+					tempEnt.u.li.e1 = firstEnt->u.li.e1.ConvertTo2d();
+					tempEnt.u.li.e2 = firstEnt->u.li.e2.ConvertTo2d();
 					firstEntity.push_back(tempEnt);
 				}
-				if (firstNewGuy.id == A_ID) {
+				if (firstEnt->id == A_ID) {
 					gt tempEnt;
 					tempEnt.id = 'A';
-					tempEnt.u.ar.c = firstNewGuy.u.ar.c.ConvertTo2d();
-					tempEnt.u.ar.r = firstNewGuy.u.ar.r;
-					tempEnt.u.ar.sa = firstNewGuy.u.ar.sa;
-					tempEnt.u.ar.sw = firstNewGuy.u.ar.sw;
+					tempEnt.u.ar.c = firstEnt->u.ar.c.ConvertTo2d();
+					tempEnt.u.ar.r = firstEnt->u.ar.r;
+					tempEnt.u.ar.sa = firstEnt->u.ar.sa;
+					tempEnt.u.ar.sw = firstEnt->u.ar.sw;
 					firstEntity.push_back(tempEnt);
 				}
-			}
 
 			std::vector<gt> secondEntity;
 			ent secondNewGuy;
-			if (get_ent_from_eptr(geomEptrs2[UT_START], &secondNewGuy) == 0) {
-				if (secondNewGuy.id == L_ID) {
+				if (secondEnt->id == L_ID) {
 					gt tempEnt;
 					tempEnt.id = 'L';
-					tempEnt.u.li.e1 = secondNewGuy.u.li.e1.ConvertTo2d();
-					tempEnt.u.li.e2 = secondNewGuy.u.li.e2.ConvertTo2d();
+					tempEnt.u.li.e1 = secondEnt->u.li.e1.ConvertTo2d();
+					tempEnt.u.li.e2 = secondEnt->u.li.e2.ConvertTo2d();
 					secondEntity.push_back(tempEnt);
 				}
-				if (secondNewGuy.id == A_ID) {
+				if (secondEnt->id == A_ID) {
 					gt tempEnt;
 					tempEnt.id = 'A';
-					tempEnt.u.ar.c = secondNewGuy.u.ar.c.ConvertTo2d();
-					tempEnt.u.ar.r = secondNewGuy.u.ar.r;
-					tempEnt.u.ar.sa = secondNewGuy.u.ar.sa;
-					tempEnt.u.ar.sw = secondNewGuy.u.ar.sw;
+					tempEnt.u.ar.c = secondEnt->u.ar.c.ConvertTo2d();
+					tempEnt.u.ar.r = secondEnt->u.ar.r;
+					tempEnt.u.ar.sa = secondEnt->u.ar.sa;
+					tempEnt.u.ar.sw = secondEnt->u.ar.sw;
 					secondEntity.push_back(tempEnt);
 				}
-			}
 
-			// Find the insections b/w the lineEnt and the boundyEnts
-			p_2di biasPt;
 			for (const auto& firstEnt : firstEntity) {
 				for (const auto& secondEnt : secondEntity) {
 					p_2d intersectPts;
@@ -296,7 +282,7 @@ namespace Mastercam::IO::Interop {
 						newPoint->Commit();
 						return newPoint->GetEntityID();
 					}
-					else { return 0; };
+					else { return NULL; };
 				}
 			}
 		};
