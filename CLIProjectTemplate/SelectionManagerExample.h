@@ -10,8 +10,8 @@
 #include "math1_ch.h"
 #include "DbGet_CH.h"
 #include "m_mill.h"
-#include "cmaPoint2D_CH.h"
-#include "BaseTypes_CH.h"
+//#include "cmaPoint2D_CH.h"
+//#include "BaseTypes_CH.h"
 #include "Assoc_CH.h"
 
 #pragma comment(lib,"MCMill.lib")
@@ -226,20 +226,22 @@ namespace Mastercam::IO::Interop {
 			bool successful;
 			auto firstEnt = std::make_unique<ent>();
 			auto secondEnt = std::make_unique<ent>();
-			GetEntityByID(GEO1->GetEntityID(), *firstEnt, &successful);
-			GetEntityByID(GEO2->GetEntityID(), *secondEnt, &successful);
+			GetEntityByID(GEO1->GetEntityID(), *firstEnt, &successful);//#include "Assoc_CH.h"
+			GetEntityByID(GEO2->GetEntityID(), *secondEnt, &successful);//#include "Assoc_CH.h"
 
-			std::vector<gt> firstEntity;
+			std::vector<gt> firstEntity;//GT List of first entity
 			ent firstNewGuy;
-				if (firstEnt->id == L_ID) {
+				if (firstEnt->id == L_ID) { // If first entity is a line
 					gt tempEnt;
+					//converts line data to GT data
 					tempEnt.id = 'L';
 					tempEnt.u.li.e1 = firstEnt->u.li.e1.ConvertTo2d();
 					tempEnt.u.li.e2 = firstEnt->u.li.e2.ConvertTo2d();
 					firstEntity.push_back(tempEnt);
 				}
-				if (firstEnt->id == A_ID) {
+				if (firstEnt->id == A_ID) { // if first entity is an arc
 					gt tempEnt;
+					//converts arc data to GT data
 					tempEnt.id = 'A';
 					tempEnt.u.ar.c = firstEnt->u.ar.c.ConvertTo2d();
 					tempEnt.u.ar.r = firstEnt->u.ar.r;
@@ -248,17 +250,19 @@ namespace Mastercam::IO::Interop {
 					firstEntity.push_back(tempEnt);
 				}
 
-			std::vector<gt> secondEntity;
+			std::vector<gt> secondEntity;//GT List of second entity
 			ent secondNewGuy;
-				if (secondEnt->id == L_ID) {
+				if (secondEnt->id == L_ID) { // If second entity is a line
 					gt tempEnt;
+					//converts line data to GT data
 					tempEnt.id = 'L';
 					tempEnt.u.li.e1 = secondEnt->u.li.e1.ConvertTo2d();
 					tempEnt.u.li.e2 = secondEnt->u.li.e2.ConvertTo2d();
 					secondEntity.push_back(tempEnt);
 				}
-				if (secondEnt->id == A_ID) {
+				if (secondEnt->id == A_ID) { // If second entity is an arc
 					gt tempEnt;
+					//converts arc data to GT data
 					tempEnt.id = 'A';
 					tempEnt.u.ar.c = secondEnt->u.ar.c.ConvertTo2d();
 					tempEnt.u.ar.r = secondEnt->u.ar.r;
@@ -276,11 +280,11 @@ namespace Mastercam::IO::Interop {
 					ints_on_gt(&firstEnt, &secondEnt, biasPt, &intersectPts, &nIntersections, MTOL, &success);
 					if (success) {
 						auto newPointGeo = intersectPts;
-						auto newPoint = gcnew Mastercam::BasicGeometry::PointGeometry();
-						newPoint->Data.x = newPointGeo[0];
-						newPoint->Data.y = newPointGeo[1];
-						newPoint->Commit();
-						return newPoint->GetEntityID();
+						auto newPoint = gcnew Mastercam::BasicGeometry::PointGeometry(); // creates new point
+						newPoint->Data.x = newPointGeo[0]; // pulls x cord from p_2d
+						newPoint->Data.y = newPointGeo[1]; // pulls y cord from p_2d
+						newPoint->Commit(); // saves new point to database
+						return newPoint->GetEntityID(); // sends new point GeoID back to NETHook side
 					}
 					else { return NULL; };
 				}
