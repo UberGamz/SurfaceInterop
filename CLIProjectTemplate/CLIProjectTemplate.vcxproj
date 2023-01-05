@@ -58,6 +58,7 @@
     <RootNamespace>CLIProjectTemplate</RootNamespace>
     <Keyword>MFCDLLProj</Keyword>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <TargetFramework>.Net 4.7.2</TargetFramework>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -67,7 +68,6 @@
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CLRSupport>true</CLRSupport>
-    <TargetFrameworkVersion>4.8</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
@@ -109,7 +109,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(SDKDir);$(SDKDir)interfaces\CoreUtilities;$(SDKDir)interfaces\gui;$(SDKDir)interfaces\guibase;$(SDKDir)interfaces\corebase;$(SDKDir)interfaces\core;$(SDKDir)interfaces\control;$(SDKDir)interfaces\geomsld;$(SDKDir)interfaces\lathe;$(SDKDir)interfaces\machinedef;$(SDKDir)interfaces\mill;$(SDKDir)interfaces\post;$(SDKDir)interfaces\msurf;$(SDKDir)interfaces\wire;$(SDKDir)interfaces\uictrls;$(SDKDir)interfaces\tlcore;$(SDKDir)interfaces\tool;$(SDKDir)interfaces\math;$(SDKDir)interfaces\curvesurfgeom;$(SDKDir)interfaces\systypes;$(SDKDir)interfaces\bnci;$(SDKDir)interfaces\mcamlicense;$(SDKDir)interfaces\Observable;$(SDKDir)NGP\Core\gaf\base\misc\h;$(SDKDir)NGP\Core\h;$(SDKDir)3rdParty\BCGCBPro\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SDKDir);$(SDKDir)interfaces\CoreUtilities;$(SDKDir)interfaces\gui;$(SDKDir)interfaces\guibase;$(SDKDir)interfaces\corebase;$(SDKDir)interfaces\core;$(SDKDir)interfaces\control;$(SDKDir)interfaces\geomsld;$(SDKDir)interfaces\lathe;$(SDKDir)interfaces\machinedef;$(SDKDir)interfaces\mill;$(SDKDir)interfaces\post;$(SDKDir)interfaces\msurf;$(SDKDir)interfaces\wire;$(SDKDir)interfaces\uictrls;$(SDKDir)interfaces\tlcore;$(SDKDir)interfaces\tool;$(SDKDir)interfaces\math;$(SDKDir)interfaces\curvesurfgeom;$(SDKDir)interfaces\systypes;$(SDKDir)interfaces\bnci;$(SDKDir)interfaces\mcamlicense;$(SDKDir)interfaces\Observable;$(SDKDir)NGP\Core\gaf\base\misc\h;$(SDKDir)NGP\Core\h;$(SDKDir)3rdParty\BCGCBPro\src;C:\Program Files\Mastercam 2022\Mastercam\SDK\interfaces\CHookAPI;C:\Program Files\Mastercam 2022\Mastercam\SDK\interfaces\CHookAPI\Math;C:\Program Files\Mastercam 2022\Mastercam\SDK\interfaces\CHookAPI\CHookAPI;C:\Program Files\Mastercam 2022\Mastercam\SDK\interfaces\CHookAPI\Database;C:\Program Files\Mastercam 2022\Mastercam\SDK\interfaces\CHookAPI\IO;C:\Program Files\Mastercam 2022\Mastercam\SDK\interfaces\CHookAPI\Support;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;_WINDOWS;_DEBUG;_AFXEXT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -127,8 +127,8 @@
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>Mastercam.lib;MCCore.lib;MCCoreBase.lib;TlCore.lib;UICtrls.lib;MCGeomSld.lib;MCMill.lib;MCCAD.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SDKDir)x64\$(Configuration);$(SDKDir)3rdParty\BCGCBPro\libx64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Mastercam.lib;MCCore.lib;MCCoreBase.lib;TlCore.lib;UICtrls.lib;MCGeomSld.lib;MCMill.lib;MCCAD.lib;Database.lib;Math.lib;CHookAPI.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SDKDir)x64\$(Configuration);$(SDKDir)3rdParty\BCGCBPro\libx64;C:\Program Files\Mastercam 2022\Mastercam\SDK\interfaces;C:\Program Files\Mastercam 2022\Mastercam\SDK;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -152,7 +152,7 @@
       <MkTypLibCompatible>false</MkTypLibCompatible>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SDKDir);$(SDKDir)interfaces\CoreUtilities;$(SDKDir)interfaces\gui;$(SDKDir)interfaces\guibase;$(SDKDir)interfaces\corebase;$(SDKDir)interfaces\core;$(SDKDir)interfaces\control;$(SDKDir)interfaces\geomsld;$(SDKDir)interfaces\lathe;$(SDKDir)interfaces\machinedef;$(SDKDir)interfaces\mill;$(SDKDir)interfaces\post;$(SDKDir)interfaces\msurf;$(SDKDir)interfaces\wire;$(SDKDir)interfaces\uictrls;$(SDKDir)interfaces\tlcore;$(SDKDir)interfaces\tool;$(SDKDir)interfaces\math;$(SDKDir)interfaces\curvesurfgeom;$(SDKDir)interfaces\systypes;$(SDKDir)interfaces\bnci;$(SDKDir)interfaces\mcamlicense;$(SDKDir)interfaces\Observable;$(SDKDir)NGP\Core\gaf\base\misc\h;$(SDKDir)NGP\Core\h;$(SDKDir)3rdParty\BCGCBPro\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SDKDir);$(SDKDir)interfaces\CoreUtilities;$(SDKDir)interfaces\gui;$(SDKDir)interfaces\guibase;$(SDKDir)interfaces\corebase;$(SDKDir)interfaces\core;$(SDKDir)interfaces\control;$(SDKDir)interfaces\geomsld;$(SDKDir)interfaces\lathe;$(SDKDir)interfaces\machinedef;$(SDKDir)interfaces\mill;$(SDKDir)interfaces\post;$(SDKDir)interfaces\msurf;$(SDKDir)interfaces\wire;$(SDKDir)interfaces\uictrls;$(SDKDir)interfaces\tlcore;$(SDKDir)interfaces\tool;$(SDKDir)interfaces\math;$(SDKDir)interfaces\curvesurfgeom;$(SDKDir)interfaces\systypes;$(SDKDir)interfaces\bnci;$(SDKDir)interfaces\mcamlicense;$(SDKDir)interfaces\Observable;$(SDKDir)NGP\Core\gaf\base\misc\h;$(SDKDir)NGP\Core\h;$(SDKDir)3rdParty\BCGCBPro\src;C:\Program Files\Mastercam 2022\Mastercam\SDK\interfaces\CHookAPI;C:\Program Files\Mastercam 2022\Mastercam\SDK\interfaces\CHookAPI\Math;C:\Program Files\Mastercam 2022\Mastercam\SDK\interfaces\CHookAPI\CHookAPI;C:\Program Files\Mastercam 2022\Mastercam\SDK\interfaces\CHookAPI\Database;C:\Program Files\Mastercam 2022\Mastercam\SDK\interfaces\CHookAPI\IO;C:\Program Files\Mastercam 2022\Mastercam\SDK\interfaces\CHookAPI\Support;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN64;_WINDOWS;NDEBUG;_AFXEXT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -171,8 +171,8 @@
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>Mastercam.lib;MCCore.lib;MCCoreBase.lib;TlCore.lib;UICtrls.lib;MCGeomSld.lib;MCMill.lib;MCCAD.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SDKDir)x64\$(Configuration);$(SDKDir)3rdParty\BCGCBPro\libx64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Mastercam.lib;MCCore.lib;MCCoreBase.lib;TlCore.lib;UICtrls.lib;MCGeomSld.lib;MCMill.lib;MCCAD.lib;Database.lib;Math.lib;CHookAPI.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SDKDir)x64\$(Configuration);$(SDKDir)3rdParty\BCGCBPro\libx64;C:\Program Files\Mastercam 2022\Mastercam\SDK\interfaces;C:\Program Files\Mastercam 2022\Mastercam\SDK;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
