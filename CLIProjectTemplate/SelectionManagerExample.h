@@ -220,6 +220,7 @@ namespace Mastercam::IO::Interop {
 
 			return nullptr;
 		}
+
 		static int SelectionManager::Intersect(Mastercam::Database::Geometry^ GEO1, Mastercam::Database::Geometry^ GEO2) {
 
 			p_2di biasPt;
@@ -290,6 +291,48 @@ namespace Mastercam::IO::Interop {
 				}
 			}
 		};
+
+		static Mastercam::Database::Chain^ SelectionManager::ChainLinker (Mastercam::Database::Geometry^ GEO1){
+
+			bool successful;
+			Mastercam::Database::Chain^ returnChain; // NETHook side chain
+			CHAIN* tempChain; // CLI side chain
+			ent entity; // blank entity
+			GetEntityByID(GEO1->GetEntityID(), entity, &successful); // Gets ent value and assigns to entity
+			std::vector<ent> entities; // Blank vector list needed for CreateChain method
+			entities.push_back(entity); // adds entity to vector list
+			tempChain = SelectionManager::CreateChain(entities); // Sends Entity List to chain creator (in order)
+
+			//TODO -> Convert from CHAIN* to Mastercam::Database::Chain^
+
+			return returnChain;
+		}
+		/// <summary> Construct a Chain from the supplied list of entities. </summary>
+		/// <param name="entities"> The (in order!) line and/or arc entities. </param>
+		/// <returns> The new chain if successful, else null. </returns>
+		/// 		static CHAIN* SelectionManager::CreateChain(std::vector<ent>& entities){
+		static CHAIN* SelectionManager::CreateChain(std::vector<ent>& entities)
+		{
+			CHAIN* chain;
+			short err = alloc_chain(&chain, FALSE /* partial*/);
+			bool result = (err == 0 && chain != nullptr);
+
+			if (result)
+			{
+				CHAIN_ENT* last_chain_ent = nullptr;
+				for (auto& entity : entities)
+				{
+					short errCode = add_curve_to_chain(&entity, 0, TRUE, 0, chain, &last_chain_ent);
+					if (errCode != CHAIN_OK) // bail out !
+					{
+						result = false;
+						break;
+					}
+				}
+			}
+
+			return (result ? chain : nullptr);
+		}
 	};
 }
 
