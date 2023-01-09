@@ -310,7 +310,7 @@ namespace Mastercam::IO::Interop {
 		/// <summary> Construct a Chain from the supplied list of entities. </summary>
 		/// <param name="entities"> The (in order!) line and/or arc entities. </param>
 		/// <returns> The new chain if successful, else null. </returns>
-		/// 		static CHAIN* SelectionManager::CreateChain(std::vector<ent>& entities){
+		/// static CHAIN* SelectionManager::CreateChain(std::vector<ent>& entities){
 		static CHAIN* SelectionManager::CreateChain(std::vector<ent>& entities)
 		{
 			CHAIN* chain;
