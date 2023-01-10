@@ -223,36 +223,7 @@ namespace Mastercam::IO::Interop {
 
 			return nullptr;
 		}
-		static Mastercam::Database::Chain^ SelectionManager::GetNetChain1(CHAIN* nativeChain)
-		{
-			Chain^ returnChain = nullptr;
-			DB_LIST_ENT_PTR** chainPointer;
-			ent chain;
-			ent* entity;
-			bool correct;
-			int* entNumber; 
-			//dbEntityPtr ptr; <- native intPtr
 
-			chain_to_eptrs(nativeChain, correct, chainPointer, entNumber);
-			get_ent_from_eptr(chainPointer, entity); // <--Needs conversion from DB_LIST_ENT_PTR ** to DB_LIST_ENT_PTR
-			auto geo = Geometry::RetrieveEntity(entity[0].ent_idn);
-			auto geoArray = gcnew System::Collections::Generic::List<Geometry^>();
-			auto chainArray = ChainManager::ChainGeometry(geoArray->ToArray());
-			returnChain = chainArray[0];
-			return returnChain;
-		}
-		static Mastercam::Database::Chain^ SelectionManager::GetNetChain2(CHAIN* nativeChain)
-		{
-			Chain^ returnChain = nullptr;
-			IntPtr point;
-			DB_LIST_ENT_PTR nativeChainPoint;
-			nativeChainPoint = nativeChain; //<--Needs conversion from CHAIN* to DB_LIST_ENT_PTR
-			point = nativeChainPoint; //<--Needs conversion from DB_LIST_ENT_PTR to IntPtr
-			
-			returnChain = NETHookApiReflection::ConstructChain(point);
-
-			return returnChain;
-		}
 
 		static int SelectionManager::Intersect(Mastercam::Database::Geometry^ GEO1, Mastercam::Database::Geometry^ GEO2) {
 
@@ -325,17 +296,21 @@ namespace Mastercam::IO::Interop {
 			}
 		};
 
-		static Mastercam::Database::Chain^ SelectionManager::ChainLinker (Mastercam::Database::Geometry^ GEO1){
+		static Mastercam::Database::Chain^ SelectionManager::ChainLinker (System::Collections::Generic::List<int>^ GeoList){
+
 
 			bool successful;
 			Mastercam::Database::Chain^ returnChain; // NETHook side chain
 			CHAIN* tempChain; // CLI side chain
 			ent entity; // blank entity
-			GetEntityByID(GEO1->GetEntityID(), entity, &successful); // Gets ent value and assigns to entity
 			std::vector<ent> entities; // Blank vector list needed for CreateChain method
+			for (auto i=0;i<GeoList->Count;i++){
+			GetEntityByID(GeoList[i], entity, &successful); // Gets ent value and assigns to entity
+			
 			entities.push_back(entity); // adds entity to vector list
+			}
 			tempChain = SelectionManager::CreateChain(entities); // Sends Entity List to chain creator (in order)
-			returnChain = SelectionManager::GetNetChain1(tempChain);
+			returnChain = SelectionManager::GetNetChain(tempChain);
 			
 			return returnChain;
 		}
@@ -365,6 +340,28 @@ namespace Mastercam::IO::Interop {
 
 			return (result ? chain : nullptr);
 		}
+
+		static Mastercam::Database::Chain^ SelectionManager::GetNetChain(CHAIN* chain)
+		{
+			auto newChains = gcnew List<Chain^>();
+
+			//** you created a chain and now use it below
+			if (chain)
+			{
+				for (auto currentChain = chain; currentChain != nullptr; currentChain = currentChain->next)
+				{
+					IntPtr chainPointer(currentChain);
+					auto o = NETHookApiReflection::ConstructChain ( chainPointer );
+					if (o != nullptr) // Should never be, but just in case...
+					{
+						newChains->Add(dynamic_cast<Chain^> (o));
+					}
+				}
+			}
+
+			return newChains[0];
+		}
+
 	};
 }
 
