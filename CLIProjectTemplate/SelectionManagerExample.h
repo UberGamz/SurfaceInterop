@@ -13,6 +13,9 @@
 //#include "cmaPoint2D_CH.h"
 //#include "BaseTypes_CH.h"
 #include "Assoc_CH.h"
+#include "m_chookapi.h"
+#include "array"
+#include "Chain_CH.h"
 
 #pragma comment(lib,"MCMill.lib")
 #pragma once
@@ -220,6 +223,36 @@ namespace Mastercam::IO::Interop {
 
 			return nullptr;
 		}
+		static Mastercam::Database::Chain^ SelectionManager::GetNetChain1(CHAIN* nativeChain)
+		{
+			Chain^ returnChain = nullptr;
+			DB_LIST_ENT_PTR** chainPointer;
+			ent chain;
+			ent* entity;
+			bool correct;
+			int* entNumber; 
+			//dbEntityPtr ptr; <- native intPtr
+
+			chain_to_eptrs(nativeChain, correct, chainPointer, entNumber);
+			get_ent_from_eptr(chainPointer, entity); // <--Needs conversion from DB_LIST_ENT_PTR ** to DB_LIST_ENT_PTR
+			auto geo = Geometry::RetrieveEntity(entity[0].ent_idn);
+			auto geoArray = gcnew System::Collections::Generic::List<Geometry^>();
+			auto chainArray = ChainManager::ChainGeometry(geoArray->ToArray());
+			returnChain = chainArray[0];
+			return returnChain;
+		}
+		static Mastercam::Database::Chain^ SelectionManager::GetNetChain2(CHAIN* nativeChain)
+		{
+			Chain^ returnChain = nullptr;
+			IntPtr point;
+			DB_LIST_ENT_PTR nativeChainPoint;
+			nativeChainPoint = nativeChain; //<--Needs conversion from CHAIN* to DB_LIST_ENT_PTR
+			point = nativeChainPoint; //<--Needs conversion from DB_LIST_ENT_PTR to IntPtr
+			
+			returnChain = NETHookApiReflection::ConstructChain(point);
+
+			return returnChain;
+		}
 
 		static int SelectionManager::Intersect(Mastercam::Database::Geometry^ GEO1, Mastercam::Database::Geometry^ GEO2) {
 
@@ -302,9 +335,8 @@ namespace Mastercam::IO::Interop {
 			std::vector<ent> entities; // Blank vector list needed for CreateChain method
 			entities.push_back(entity); // adds entity to vector list
 			tempChain = SelectionManager::CreateChain(entities); // Sends Entity List to chain creator (in order)
-
-			//TODO -> Convert from CHAIN* to Mastercam::Database::Chain^
-
+			returnChain = SelectionManager::GetNetChain1(tempChain);
+			
 			return returnChain;
 		}
 		/// <summary> Construct a Chain from the supplied list of entities. </summary>
