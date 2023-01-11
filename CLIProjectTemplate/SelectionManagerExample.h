@@ -361,6 +361,58 @@ namespace Mastercam::IO::Interop {
 
 			return newChains[0];
 		}
+		static int SelectionManager::IntersectPoint(Mastercam::Database::Geometry^ GEO1, Mastercam::Database::Geometry^ GEO2) {
+			p_2di biasPt;
+			bool successful;
+			auto firstEnt = std::make_unique<ent>();
+			auto secondEnt = std::make_unique<ent>();
+			GetEntityByID(GEO1->GetEntityID(), *firstEnt, &successful);//#include "Assoc_CH.h"
+			GetEntityByID(GEO2->GetEntityID(), *secondEnt, &successful);//#include "Assoc_CH.h"
+
+			std::vector<gt> firstEntity;//GT List of first entity
+			ent firstNewGuy;
+			if (firstEnt->id == L_ID) { // If first entity is a line
+				gt tempEnt;
+				//converts line data to GT data
+				tempEnt.id = 'L';
+				tempEnt.u.li.e1 = firstEnt->u.li.e1.ConvertTo2d();
+				tempEnt.u.li.e2 = firstEnt->u.li.e2.ConvertTo2d();
+				firstEntity.push_back(tempEnt);
+			}
+
+			std::vector<gt> secondEntity;//GT List of second entity
+			ent secondNewGuy;
+			if (secondEnt->id == L_ID) { // If second entity is a line
+				gt tempEnt;
+				//converts line data to GT data
+				tempEnt.id = 'L';
+				tempEnt.u.li.e1 = secondEnt->u.li.e1.ConvertTo2d();
+				tempEnt.u.li.e2 = secondEnt->u.li.e2.ConvertTo2d();
+				secondEntity.push_back(tempEnt);
+			}
+
+			for (auto& firstEnt : firstEntity) {
+				for (auto& secondEnt : secondEntity) {
+					p_2d intersectPts;
+					long nIntersections;
+					bool success = false;
+					double tolerance = 2.0;
+
+					ints_on_gt_new(&firstEnt, &secondEnt, biasPt, &intersectPts, &nIntersections, tolerance, &success);
+					if (success) {
+						auto newPointGeo = intersectPts;
+						auto newPoint = gcnew Mastercam::BasicGeometry::PointGeometry(); // creates new point
+						newPoint->Data.x = newPointGeo[0]; // pulls x cord from p_2d
+						newPoint->Data.y = newPointGeo[1]; // pulls y cord from p_2d
+						newPoint->Commit(); // saves new point to database
+						return newPoint->GetEntityID(); // sends new point GeoID back to NETHook side
+					}
+					else { return NULL; };
+				}
+			}
+		
+
+		}
 
 	};
 }
