@@ -470,14 +470,14 @@ namespace Mastercam::IO::Interop {
 			return resultChain;
 		}
 
-		static bool SelectionManager::BreakAtPoints(Mastercam::Curves::ArcGeometry arc, Mastercam::BasicGeometry::PointGeometry point) {
+		static bool SelectionManager::BreakAtPoints(Mastercam::Curves::ArcGeometry^ arc, Mastercam::BasicGeometry::PointGeometry^ point) {
 
 			bool successful = false;
 			p_2d pointy;
 			auto firstEnt = std::make_unique<ent>();
 			auto secondEnt = std::make_unique<ent>();
-			GetEntityByID(arc.GetEntityID(), *firstEnt, &successful);
-			GetEntityByID(point.GetEntityID(), *secondEnt, &successful);
+			GetEntityByID(arc->GetEntityID(), *firstEnt, &successful);//#include "Assoc_CH.h"
+			GetEntityByID(point->GetEntityID(), *secondEnt, &successful);//#include "Assoc_CH.h"
 			if (secondEnt->id == P_ID) {
 				pointy = secondEnt->u.pt.ConvertTo2d();
 			}
