@@ -16,6 +16,10 @@
 #include "m_chookapi.h"
 #include "array"
 #include "Chain_CH.h"
+#include "OffsetChains_CH.H"
+//#include "DbLoIo_ch.h"
+//#include "3dvars_ch.h"
+
 
 #pragma comment(lib,"MCMill.lib")
 #pragma once
@@ -294,6 +298,7 @@ namespace Mastercam::IO::Interop {
 					else { return NULL; };
 				}
 			}
+			return successful;
 		};
 
 		static Mastercam::Database::Chain^ SelectionManager::ChainLinker (System::Collections::Generic::List<int>^ GeoList){
@@ -410,10 +415,142 @@ namespace Mastercam::IO::Interop {
 					else { return NULL; };
 				}
 			}
-		
+			return NULL;
+		}
+		static Mastercam::Database::Chain^ SelectionManager::ChainOffsetWithResult(Mastercam::Database::Chain^ chain, double distance, int color, int level)
+		{
+			Mastercam::Database::Chain^ resultChain;
+			if (chain)
+			{
+				auto pChain = GetNativeChain(chain);
+				Cnc::XformOffsetChains::OffsetChainsParams offsetParams;
+				Cnc::XformOffsetChains::ResultMethod resultMethod;
+				//Cnc::XformOffsetChains::DepthMethod depthMethod;
+				Cnc::XformOffsetChains::TranslateDirection translateDirection;
+				//Cnc::XformOffsetChains::FilletCornerStyle filletCornerStyle;
+				resultMethod = Cnc::XformOffsetChains::ResultMethod::Copy ;
+				//depthMethod = Cnc::XformOffsetChains::DepthMethod::Incremental ;
+				translateDirection = Cnc::XformOffsetChains::TranslateDirection::DefinedSide ;
+				//filletCornerStyle = Cnc::XformOffsetChains::FilletCornerStyle::Sharp ;
 
+				offsetParams.m_ResultMethod = resultMethod;            //!< ResultMethod
+				offsetParams.m_Number = 1;                           //!< Number
+				offsetParams.m_Distance = distance;                      //!< Distance
+				//offsetParams.m_Depth = 0;                         //!< Depth
+				//offsetParams.m_ContourDepth = 0;                  //!< Contour Depth
+				//offsetParams.m_AbsoluteDepth = 0;                 //!< Absolute Depth
+				//offsetParams.m_IncrementalDepth = 0;              //!< Incremental Depth
+				//offsetParams.m_DepthMethod = depthMethod;              //!< Depth Method
+				//offsetParams.m_Angle = 0;                         //!< Angle
+				offsetParams.m_Direction = translateDirection;         //!< Translate Direction
+				//offsetParams.m_FilletCorners = false;                   //!< Fillet Corners
+				//offsetParams.m_FilletCornerStyle = filletCornerStyle;  //!< Fillet Corner Style
+				//offsetParams.m_InfiniteLookAhead = false;               //!< Infinite Look Ahead
+				//offsetParams.m_Tolerance = 0.001;                     //!< Tolerance
+				//offsetParams.m_MaximumDepth = 0;                  //!< Maximum Depth
+				//offsetParams.m_AutoPreview = false;                     //!< Auto Preview
+				offsetParams.m_UseNewAttributeColor = true;            //!< true to use new color attribute
+				offsetParams.m_UseNewAttributeLevel = true;            //!< true to use new level attribute
+				offsetParams.m_ResultColor = color;                      //!< Result Color
+				offsetParams.m_Level = level;                            //!< Level
+				//offsetParams.m_SeparateByLevel = false;                 //!< Separate By Level
+
+				EptrArray entityArray;
+				List<int>^ GeoList;
+				bool success = Cnc::XformOffsetChains::OffsetChains(pChain, offsetParams, entityArray);
+				if (success == true) {
+					if (entityArray.GetSize() > 1) {
+						GeoList->Add(entityArray[1]->eptr->ent_idn);
+						System::Windows::Forms::MessageBox::Show(GeoList[0].ToString());
+					}
+					//resultChain = ChainLinker(GeoList);
+				}
+
+			}
+			return resultChain;
 		}
 
+		static bool SelectionManager::BreakAtPoints(System::Collections::Generic::List<int>^ geoIds, System::Collections::Generic::List<int>^ pointIds) {
+
+			DllImpExp void store_ent(ent * entity, DB_LIST_ENT_PTR * d_ptr, short new_sel,
+				MC_BYTE new_color, int new_level, attributes new_attrib,
+				bool* succf, bool draw = true);
+
+			bool successful = false;
+			for (auto i = 0; i < geoIds->Count; i++) {
+				for (auto k = 0; k < pointIds->Count; k++) {
+					p_2d pointy;
+					bool successful = false;
+					auto firstEnt = std::make_unique<ent>();
+					auto secondEnt = std::make_unique<ent>();
+					ent arcEnt;
+					GetEntityByID(geoIds[i], *firstEnt, &successful);
+					GetEntityByID(pointIds[k], *secondEnt, &successful);
+					GetEntityByID(geoIds[i], arcEnt, &successful);
+					if (secondEnt->id == P_ID) {
+						pointy = secondEnt->u.pt.ConvertTo2d();
+					}
+					std::vector<gt> firstEntity;//GT List of first entity
+					if (firstEnt->id == A_ID) { // if first entity is an arc
+						gt tempEnt;
+						//converts arc data to GT data
+						tempEnt.id = 'A';
+						tempEnt.u.ar.c = firstEnt->u.ar.c.ConvertTo2d();
+						tempEnt.u.ar.r = firstEnt->u.ar.r;
+						tempEnt.u.ar.sa = firstEnt->u.ar.sa;
+						tempEnt.u.ar.sw = firstEnt->u.ar.sw;
+						firstEntity.push_back(tempEnt);
+					}
+					for (auto& firstEnt : firstEntity) {
+						successful = pt_on_gt(pointy, &firstEnt);
+						if (successful == true) {
+							p_3d startPoint = arcEnt.u.ar.ep1;
+							p_3d endPoint = arcEnt.u.ar.ep2;
+							p_2d centerPoint = firstEnt.u.ar.c;
+							a_2d resultArc1;
+							a_2d resultArc2;
+							bool arcCreated;
+							DB_LIST_ENT_PTR arc1Pointer;
+							DB_LIST_ENT_PTR arc2Pointer;
+							auto topView = gcnew MCView();
+							attributes attrib;
+							//Mastercam::Math::Point3D centerPointCords = Mastercam::Math::Point3D(centerPoint[0], centerPoint[1], 0);
+							constr_arc(startPoint.ConvertTo2d(), pointy, centerPoint, false, &resultArc1, &arcCreated);
+							constr_arc(endPoint.ConvertTo2d(), pointy, centerPoint, false, &resultArc2, &arcCreated);
+							
+
+							ent entity; // entity struct to be stored
+							entity.id = A_ID; // The 'ent' will be an Arc
+							entity.refs = 0;
+							entity.eptr->eptr->u.ar.c = resultArc1.c.ConvertTo3d();
+							entity.eptr->eptr->u.ar.r = resultArc1.r;
+							entity.eptr->eptr->u.ar.sa = resultArc1.sa;
+							entity.eptr->eptr->u.ar.sw = resultArc1.sw;
+							store_ent(&entity, &arc1Pointer, ALIVE_BIT, MC_WHITE, 75, attrib, &arcCreated);
+							
+
+							
+							//Mastercam::Curves::ArcGeometry arcResult1;
+							//arcResult1.Data.CenterPoint = centerPointCords;
+							//arcResult1.Data.Radius = arcEnt.u.ar.r;
+							//arcResult1.Data.StartAngleDegrees = resultArc1.sa;
+							//arcResult1.Data.EndAngleDegrees = resultArc1.sw;
+							//arcResult1.Color = 60;
+							//arcResult1.Commit();
+							//Mastercam::Curves::ArcGeometry arcResult2;
+							//arcResult2.Data.CenterPoint = centerPointCords;
+							//arcResult2.Data.Radius = arcEnt.u.ar.r;
+							//arcResult2.Data.StartAngleDegrees = resultArc2.sa;
+							//arcResult2.Data.EndAngleDegrees = resultArc2.sw;
+							//arcResult2.Color = 60;
+							//arcResult2.Commit();
+							if (arcCreated == true) { return arcCreated; }
+						}
+					}
+				}
+			}
+			return successful;
+		}
 	};
 }
 
