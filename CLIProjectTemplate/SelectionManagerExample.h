@@ -470,83 +470,32 @@ namespace Mastercam::IO::Interop {
 			return resultChain;
 		}
 
-		static bool SelectionManager::BreakAtPoints(System::Collections::Generic::List<int>^ geoIds, System::Collections::Generic::List<int>^ pointIds) {
-
-			DllImpExp void store_ent(ent * entity, DB_LIST_ENT_PTR * d_ptr, short new_sel,
-				MC_BYTE new_color, int new_level, attributes new_attrib,
-				bool* succf, bool draw = true);
+		static bool SelectionManager::BreakAtPoints(Mastercam::Curves::ArcGeometry arc, Mastercam::BasicGeometry::PointGeometry point) {
 
 			bool successful = false;
-			for (auto i = 0; i < geoIds->Count; i++) {
-				for (auto k = 0; k < pointIds->Count; k++) {
-					p_2d pointy;
-					bool successful = false;
-					auto firstEnt = std::make_unique<ent>();
-					auto secondEnt = std::make_unique<ent>();
-					ent arcEnt;
-					GetEntityByID(geoIds[i], *firstEnt, &successful);
-					GetEntityByID(pointIds[k], *secondEnt, &successful);
-					GetEntityByID(geoIds[i], arcEnt, &successful);
-					if (secondEnt->id == P_ID) {
-						pointy = secondEnt->u.pt.ConvertTo2d();
-					}
-					std::vector<gt> firstEntity;//GT List of first entity
-					if (firstEnt->id == A_ID) { // if first entity is an arc
-						gt tempEnt;
-						//converts arc data to GT data
-						tempEnt.id = 'A';
-						tempEnt.u.ar.c = firstEnt->u.ar.c.ConvertTo2d();
-						tempEnt.u.ar.r = firstEnt->u.ar.r;
-						tempEnt.u.ar.sa = firstEnt->u.ar.sa;
-						tempEnt.u.ar.sw = firstEnt->u.ar.sw;
-						firstEntity.push_back(tempEnt);
-					}
-					for (auto& firstEnt : firstEntity) {
-						successful = pt_on_gt(pointy, &firstEnt);
-						if (successful == true) {
-							p_3d startPoint = arcEnt.u.ar.ep1;
-							p_3d endPoint = arcEnt.u.ar.ep2;
-							p_2d centerPoint = firstEnt.u.ar.c;
-							a_2d resultArc1;
-							a_2d resultArc2;
-							bool arcCreated;
-							DB_LIST_ENT_PTR arc1Pointer;
-							DB_LIST_ENT_PTR arc2Pointer;
-							auto topView = gcnew MCView();
-							attributes attrib;
-							//Mastercam::Math::Point3D centerPointCords = Mastercam::Math::Point3D(centerPoint[0], centerPoint[1], 0);
-							constr_arc(startPoint.ConvertTo2d(), pointy, centerPoint, false, &resultArc1, &arcCreated);
-							constr_arc(endPoint.ConvertTo2d(), pointy, centerPoint, false, &resultArc2, &arcCreated);
+			p_2d pointy;
+			auto firstEnt = std::make_unique<ent>();
+			auto secondEnt = std::make_unique<ent>();
+			GetEntityByID(arc.GetEntityID(), *firstEnt, &successful);
+			GetEntityByID(point.GetEntityID(), *secondEnt, &successful);
+			if (secondEnt->id == P_ID) {
+				pointy = secondEnt->u.pt.ConvertTo2d();
+			}
+			std::vector<gt> firstEntity;
+			if (firstEnt->id == A_ID) {
+				gt tempEnt;
+				tempEnt.id = 'A';
+				tempEnt.u.ar.c = firstEnt->u.ar.c.ConvertTo2d();
+				tempEnt.u.ar.r = firstEnt->u.ar.r;
+				tempEnt.u.ar.sa = firstEnt->u.ar.sa;
+				tempEnt.u.ar.sw = firstEnt->u.ar.sw;
+				firstEntity.push_back(tempEnt);
+			}
+			for (auto& firstEnt : firstEntity) {
+				successful = pt_on_gt(pointy, &firstEnt);
+				if (successful == true) {
+					return successful;
 							
-
-							ent entity; // entity struct to be stored
-							entity.id = A_ID; // The 'ent' will be an Arc
-							entity.refs = 0;
-							entity.eptr->eptr->u.ar.c = resultArc1.c.ConvertTo3d();
-							entity.eptr->eptr->u.ar.r = resultArc1.r;
-							entity.eptr->eptr->u.ar.sa = resultArc1.sa;
-							entity.eptr->eptr->u.ar.sw = resultArc1.sw;
-							store_ent(&entity, &arc1Pointer, ALIVE_BIT, MC_WHITE, 75, attrib, &arcCreated);
-							
-
-							
-							//Mastercam::Curves::ArcGeometry arcResult1;
-							//arcResult1.Data.CenterPoint = centerPointCords;
-							//arcResult1.Data.Radius = arcEnt.u.ar.r;
-							//arcResult1.Data.StartAngleDegrees = resultArc1.sa;
-							//arcResult1.Data.EndAngleDegrees = resultArc1.sw;
-							//arcResult1.Color = 60;
-							//arcResult1.Commit();
-							//Mastercam::Curves::ArcGeometry arcResult2;
-							//arcResult2.Data.CenterPoint = centerPointCords;
-							//arcResult2.Data.Radius = arcEnt.u.ar.r;
-							//arcResult2.Data.StartAngleDegrees = resultArc2.sa;
-							//arcResult2.Data.EndAngleDegrees = resultArc2.sw;
-							//arcResult2.Color = 60;
-							//arcResult2.Commit();
-							if (arcCreated == true) { return arcCreated; }
-						}
-					}
 				}
 			}
 			return successful;
