@@ -17,7 +17,7 @@
 #include "array"
 #include "Chain_CH.h"
 #include "OffsetChains_CH.H"
-//#include "DbLoIo_ch.h"
+#include "DbLoIo_ch.h"
 //#include "3dvars_ch.h"
 
 
@@ -470,7 +470,7 @@ namespace Mastercam::IO::Interop {
 			return resultChain;
 		}
 
-		static bool SelectionManager::BreakAtPoints(Mastercam::Curves::ArcGeometry^ arc, Mastercam::BasicGeometry::PointGeometry^ point) {
+		static bool SelectionManager::PointOnArc(Mastercam::Curves::ArcGeometry^ arc, Mastercam::BasicGeometry::PointGeometry^ point) {
 
 			bool successful = false;
 			p_2d pointy;
@@ -499,6 +499,59 @@ namespace Mastercam::IO::Interop {
 				}
 			}
 			return successful;
+		}
+		static System::Collections::Generic::List<int>^ SelectionManager::BreakArcAtPoint(Mastercam::Curves::ArcGeometry^ arc, Mastercam::BasicGeometry::PointGeometry^ point) {
+			
+			System::Collections::Generic::List<int>^ newGeoIDs;
+			bool successful = false;
+			p_3d pointy;
+			ent firstEnt;
+			ent secondEnt;
+			GetEntityByID(arc->GetEntityID(), firstEnt, &successful);
+			GetEntityByID(point->GetEntityID(), secondEnt, &successful);
+			DB_LIST_ENT_PTR resultGeoID1;
+			DB_LIST_ENT_PTR resultGeoID2;
+			short newSel = ALIVE_BIT;
+			MC_BYTE mc_byte = MC_WHITE;
+			int newLevel = 76;
+			attributes newAttrib;
+			bool geoStored;
+
+			p_3d newArcCenterPoint = firstEnt.eptr->eptr->u.ar.c;
+			p_3d newArc1StartPoint = firstEnt.eptr->eptr->u.ar.ep1;
+			p_3d newArc2EndPoint = firstEnt.eptr->eptr->u.ar.ep2;
+			p_3d breakPoint = secondEnt.eptr->eptr->u.pt;
+			a_2d newArc1;
+			a_2d newArc2;
+			bool arcCreated;
+
+			constr_arc_new(newArc1StartPoint.ConvertTo2d(), breakPoint.ConvertTo2d(), newArcCenterPoint.ConvertTo2d(), true, 0.005, &newArc1, &arcCreated);
+			if (arcCreated == true) {
+				ent resultArc1;
+				resultArc1.id = 'A';
+				resultArc1.u.ar.c = newArc1.c.ConvertTo3d();
+				resultArc1.u.ar.r = newArc1.r;
+				resultArc1.u.ar.sa = newArc1.sa;
+				resultArc1.u.ar.sw = newArc1.sw;
+				store_ent(&resultArc1, &resultGeoID1, newSel, mc_byte, newLevel, newAttrib, &geoStored);//include DbLolo_CH.h
+				if (geoStored == true) {
+				//	newGeoIDs->Add(resultGeoID1->eptr->ent_idn); // <-- Object Error
+				}
+			}
+			constr_arc_new(breakPoint.ConvertTo2d(), newArc2EndPoint.ConvertTo2d(), newArcCenterPoint.ConvertTo2d(), true, 0.005, &newArc2, &arcCreated);
+			if (arcCreated == true) {
+				ent resultArc2;
+				resultArc2.id = 'a';
+				resultArc2.u.ar.c = newArc2.c.ConvertTo3d();
+				resultArc2.u.ar.r = newArc2.r;
+				resultArc2.u.ar.sa = newArc2.sa;
+				resultArc2.u.ar.sw = newArc2.sw;
+				store_ent(&resultArc2, &resultGeoID2, newSel, mc_byte, newLevel, newAttrib, &geoStored);//include DbLolo_CH.h
+				if (geoStored == true) {
+				//	newgeoids->add(resultgeoid2->eptr->ent_idn); // <-- Object Error
+				}
+			}
+			return newGeoIDs;
 		}
 	};
 }
