@@ -513,7 +513,7 @@ namespace Mastercam::IO::Interop {
 			DB_LIST_ENT_PTR resultGeoID2;
 			short newSel = ALIVE_BIT;
 			MC_BYTE mc_byte = MC_WHITE;
-			int newLevel = 76;
+			int newLevel = 75;
 			attributes newAttrib;
 			bool geoStored;
 
@@ -525,30 +525,30 @@ namespace Mastercam::IO::Interop {
 			a_2d newArc2;
 			bool arcCreated;
 
-			constr_arc_new(newArc1StartPoint.ConvertTo2d(), breakPoint.ConvertTo2d(), newArcCenterPoint.ConvertTo2d(), true, 0.005, &newArc1, &arcCreated);
+			constr_arc_new(newArc1StartPoint.ConvertTo2d(), breakPoint.ConvertTo2d(), newArcCenterPoint.ConvertTo2d(), false, 0.005, &newArc1, &arcCreated);
 			if (arcCreated == true) {
 				ent resultArc1;
-				resultArc1.id = 'A';
+				resultArc1.id = A_ID;
 				resultArc1.u.ar.c = newArc1.c.ConvertTo3d();
 				resultArc1.u.ar.r = newArc1.r;
 				resultArc1.u.ar.sa = newArc1.sa;
 				resultArc1.u.ar.sw = newArc1.sw;
 				store_ent(&resultArc1, &resultGeoID1, newSel, mc_byte, newLevel, newAttrib, &geoStored);//include DbLolo_CH.h
 				if (geoStored == true) {
-				//	newGeoIDs->Add(resultGeoID1->eptr->ent_idn); // <-- Object Error
+					//newGeoIDs->Add(resultGeoID1->eptr->ent_idn); // <-- Object Error
 				}
 			}
-			constr_arc_new(breakPoint.ConvertTo2d(), newArc2EndPoint.ConvertTo2d(), newArcCenterPoint.ConvertTo2d(), true, 0.005, &newArc2, &arcCreated);
+			constr_arc_new(breakPoint.ConvertTo2d(), newArc2EndPoint.ConvertTo2d(), newArcCenterPoint.ConvertTo2d(), false, 0.005, &newArc2, &arcCreated);
 			if (arcCreated == true) {
 				ent resultArc2;
-				resultArc2.id = 'a';
+				resultArc2.id = A_ID;
 				resultArc2.u.ar.c = newArc2.c.ConvertTo3d();
 				resultArc2.u.ar.r = newArc2.r;
 				resultArc2.u.ar.sa = newArc2.sa;
 				resultArc2.u.ar.sw = newArc2.sw;
 				store_ent(&resultArc2, &resultGeoID2, newSel, mc_byte, newLevel, newAttrib, &geoStored);//include DbLolo_CH.h
 				if (geoStored == true) {
-				//	newgeoids->add(resultgeoid2->eptr->ent_idn); // <-- Object Error
+					//newGeoIDs->Add(resultGeoID2->eptr->ent_idn); // <-- Object Error
 				}
 			}
 			return newGeoIDs;
