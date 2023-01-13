@@ -523,10 +523,8 @@ namespace Mastercam::IO::Interop {
 			p_3d breakPoint = secondEnt.eptr->eptr->u.pt;
 			a_2d newArc1;
 			a_2d newArc2;
-			bool clockwise = true;
-			if (firstEnt.u.ar.sw - firstEnt.u.ar.sa >= PI) {
-				clockwise = false;
-			}
+			bool clockwise = false;
+			if (firstEnt.u.ar.sw < 0) { clockwise = true; }
 			bool arcCreated;
 
 			constr_arc_new(newArc1StartPoint.ConvertTo2d(), breakPoint.ConvertTo2d(), newArcCenterPoint.ConvertTo2d(), clockwise, 0.005, &newArc1, &arcCreated);
