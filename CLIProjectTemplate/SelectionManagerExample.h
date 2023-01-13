@@ -523,9 +523,13 @@ namespace Mastercam::IO::Interop {
 			p_3d breakPoint = secondEnt.eptr->eptr->u.pt;
 			a_2d newArc1;
 			a_2d newArc2;
+			bool clockwise = true;
+			if (firstEnt.u.ar.sw - firstEnt.u.ar.sa >= PI) {
+				clockwise = false;
+			}
 			bool arcCreated;
 
-			constr_arc_new(newArc1StartPoint.ConvertTo2d(), breakPoint.ConvertTo2d(), newArcCenterPoint.ConvertTo2d(), false, 0.005, &newArc1, &arcCreated);
+			constr_arc_new(newArc1StartPoint.ConvertTo2d(), breakPoint.ConvertTo2d(), newArcCenterPoint.ConvertTo2d(), clockwise, 0.005, &newArc1, &arcCreated);
 			if (arcCreated == true) {
 				ent resultArc1;
 				resultArc1.id = A_ID;
@@ -538,7 +542,7 @@ namespace Mastercam::IO::Interop {
 					//newGeoIDs->Add(resultGeoID1->eptr->ent_idn); // <-- Object Error
 				}
 			}
-			constr_arc_new(breakPoint.ConvertTo2d(), newArc2EndPoint.ConvertTo2d(), newArcCenterPoint.ConvertTo2d(), false, 0.005, &newArc2, &arcCreated);
+			constr_arc_new(breakPoint.ConvertTo2d(), newArc2EndPoint.ConvertTo2d(), newArcCenterPoint.ConvertTo2d(), clockwise, 0.005, &newArc2, &arcCreated);
 			if (arcCreated == true) {
 				ent resultArc2;
 				resultArc2.id = A_ID;
