@@ -500,9 +500,9 @@ namespace Mastercam::IO::Interop {
 			}
 			return successful;
 		}
-		static System::Collections::Generic::List<int>^ SelectionManager::BreakArcAtPoint(Mastercam::Curves::ArcGeometry^ arc, Mastercam::BasicGeometry::PointGeometry^ point) {
+		static List<int>^ SelectionManager::BreakArcAtPoint(Mastercam::Curves::ArcGeometry^ arc, Mastercam::BasicGeometry::PointGeometry^ point) {
 			
-			System::Collections::Generic::List<int>^ newGeoIDs;
+			List<int>^ newGeoIDs = gcnew List<int>();
 			bool successful = false;
 			p_3d pointy;
 			ent firstEnt;
@@ -537,7 +537,7 @@ namespace Mastercam::IO::Interop {
 				resultArc1.u.ar.sw = newArc1.sw;
 				store_ent(&resultArc1, &resultGeoID1, newSel, mc_byte, newLevel, newAttrib, &geoStored);//include DbLolo_CH.h
 				if (geoStored == true) {
-					//newGeoIDs->Add(resultGeoID1->eptr->ent_idn); // <-- Object Error
+					newGeoIDs->Add(resultGeoID1->eptr->ent_idn);
 				}
 			}
 			constr_arc_new(breakPoint.ConvertTo2d(), newArc2EndPoint.ConvertTo2d(), newArcCenterPoint.ConvertTo2d(), clockwise, 0.005, &newArc2, &arcCreated);
@@ -550,7 +550,7 @@ namespace Mastercam::IO::Interop {
 				resultArc2.u.ar.sw = newArc2.sw;
 				store_ent(&resultArc2, &resultGeoID2, newSel, mc_byte, newLevel, newAttrib, &geoStored);//include DbLolo_CH.h
 				if (geoStored == true) {
-					//newGeoIDs->Add(resultGeoID2->eptr->ent_idn); // <-- Object Error
+					newGeoIDs->Add(resultGeoID2->eptr->ent_idn);
 				}
 			}
 			return newGeoIDs;
