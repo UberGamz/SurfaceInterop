@@ -421,7 +421,9 @@ namespace Mastercam::IO::Interop {
 		static Mastercam::Database::Chain^ SelectionManager::ChainOffsetWithResult(Mastercam::Database::Chain^ chain, double distance, int color, int level, bool defined)
 		{
 			Mastercam::Database::Chain^ resultChain;
+
 			if (chain){
+
 				auto pChain = GetNativeChain(chain);
 				Cnc::XformOffsetChains::OffsetChainsParams offsetParams;
 				Cnc::XformOffsetChains::ResultMethod resultMethod;
@@ -461,11 +463,12 @@ namespace Mastercam::IO::Interop {
 				bool success = Cnc::XformOffsetChains::OffsetChains(pChain, offsetParams, entityArray);
 				if (success == true) {
 					if (entityArray.GetSize() > 1) {
-						GeoList->Add(entityArray[1]->eptr->ent_idn);
+						for (auto i = 0; i < entityArray.GetSize(); i++) {
+							GeoList->Add(entityArray[i]->eptr->ent_idn);
+						}
 					}
 					resultChain = ChainLinker(GeoList);
 				}
-
 			}
 			return resultChain;
 		}
