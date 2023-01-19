@@ -401,7 +401,7 @@ namespace Mastercam::IO::Interop {
 					p_2d intersectPts;
 					long nIntersections;
 					bool success = false;
-					double tolerance = 2.0;
+					double tolerance = INFINITE;
 
 					ints_on_gt_new(&firstEnt, &secondEnt, biasPt, &intersectPts, &nIntersections, tolerance, &success);
 					if (success) {
@@ -409,19 +409,19 @@ namespace Mastercam::IO::Interop {
 						auto newPoint = gcnew Mastercam::BasicGeometry::PointGeometry(); // creates new point
 						newPoint->Data.x = newPointGeo[0]; // pulls x cord from p_2d
 						newPoint->Data.y = newPointGeo[1]; // pulls y cord from p_2d
+						newPoint->Level = GEO1->Level;
+						newPoint->Color = GEO1->Color;
 						newPoint->Commit(); // saves new point to database
 						return newPoint->GetEntityID(); // sends new point GeoID back to NETHook side
 					}
-					else { return NULL; };
 				}
 			}
 			return NULL;
 		}
-		static Mastercam::Database::Chain^ SelectionManager::ChainOffsetWithResult(Mastercam::Database::Chain^ chain, double distance, int color, int level)
+		static Mastercam::Database::Chain^ SelectionManager::ChainOffsetWithResult(Mastercam::Database::Chain^ chain, double distance, int color, int level, bool defined)
 		{
 			Mastercam::Database::Chain^ resultChain;
-			if (chain)
-			{
+			if (chain){
 				auto pChain = GetNativeChain(chain);
 				Cnc::XformOffsetChains::OffsetChainsParams offsetParams;
 				Cnc::XformOffsetChains::ResultMethod resultMethod;
@@ -430,7 +430,8 @@ namespace Mastercam::IO::Interop {
 				//Cnc::XformOffsetChains::FilletCornerStyle filletCornerStyle;
 				resultMethod = Cnc::XformOffsetChains::ResultMethod::Copy ;
 				//depthMethod = Cnc::XformOffsetChains::DepthMethod::Incremental ;
-				translateDirection = Cnc::XformOffsetChains::TranslateDirection::DefinedSide ;
+				if (defined == true) {translateDirection = Cnc::XformOffsetChains::TranslateDirection::DefinedSide;}
+				if (defined == false) {translateDirection = Cnc::XformOffsetChains::TranslateDirection::OppositeSide;}
 				//filletCornerStyle = Cnc::XformOffsetChains::FilletCornerStyle::Sharp ;
 
 				offsetParams.m_ResultMethod = resultMethod;            //!< ResultMethod
@@ -456,14 +457,13 @@ namespace Mastercam::IO::Interop {
 				//offsetParams.m_SeparateByLevel = false;                 //!< Separate By Level
 
 				EptrArray entityArray;
-				List<int>^ GeoList;
+				List<int>^ GeoList = gcnew List<int>();
 				bool success = Cnc::XformOffsetChains::OffsetChains(pChain, offsetParams, entityArray);
 				if (success == true) {
 					if (entityArray.GetSize() > 1) {
 						GeoList->Add(entityArray[1]->eptr->ent_idn);
-						System::Windows::Forms::MessageBox::Show(GeoList[0].ToString());
 					}
-					//resultChain = ChainLinker(GeoList);
+					resultChain = ChainLinker(GeoList);
 				}
 
 			}
