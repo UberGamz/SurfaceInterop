@@ -448,7 +448,7 @@ namespace Mastercam::IO::Interop {
 			return NULL;
 		}
 		
-		static Mastercam::Database::Chain^ SelectionManager::ChainOffsetWithResult(Mastercam::Database::Chain^ chain, double distance, int color, int level)
+		static Mastercam::Database::Chain^ SelectionManager::ChainOffsetWithResult(Mastercam::Database::Chain^ chain, double distance, int color, int level, int offsetDirection)
 		{
 			Mastercam::Database::Chain^ resultChain;
 			if (chain) {
@@ -456,18 +456,26 @@ namespace Mastercam::IO::Interop {
 				CHAIN** pChain = new CHAIN*;
 				copy_chain(pChainPre, pChain);
 				Cnc::XformOffsetChains::OffsetChainsParams offsetParams;
-				Cnc::XformOffsetChains::ResultMethod resultMethod;
-				Cnc::XformOffsetChains::TranslateDirection translateDirection;
-				resultMethod = Cnc::XformOffsetChains::ResultMethod::Copy ;
-				offsetParams.m_ResultMethod = resultMethod;        
+				Cnc::XformOffsetChains::TranslateDirection direction;
+				offsetParams.m_FilletCorners = true;
+				offsetParams.m_FilletCornerStyle = Cnc::XformOffsetChains::FilletCornerStyle::All;
+				offsetParams.m_ResultMethod = Cnc::XformOffsetChains::ResultMethod::Copy;
 				offsetParams.m_Number = 1;                     
-				offsetParams.m_Distance = distance;                  
-				offsetParams.m_Direction = translateDirection;      
+				offsetParams.m_Distance = distance;            
+				offsetParams.m_Direction = direction;
 				offsetParams.m_UseNewAttributeColor = true;           
 				offsetParams.m_UseNewAttributeLevel = true;            
 				offsetParams.m_ResultColor = color;                     
-				offsetParams.m_Level = level;                           
-
+				offsetParams.m_Level = level;
+				if (offsetDirection == 0) {
+					offsetParams.m_Direction = Cnc::XformOffsetChains::TranslateDirection::DefinedSide;
+				}
+				if (offsetDirection == 1) {
+					offsetParams.m_Direction = Cnc::XformOffsetChains::TranslateDirection::OppositeSide;
+				}
+				if (offsetDirection == 2) {
+					offsetParams.m_Direction = Cnc::XformOffsetChains::TranslateDirection::BothSides;
+				}
 				EptrArray entityArray;
 				List<int>^ GeoList = gcnew List<int>();
 				bool success = Cnc::XformOffsetChains::OffsetChains(pChain[0], offsetParams, entityArray);
