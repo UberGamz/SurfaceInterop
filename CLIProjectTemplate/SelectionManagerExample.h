@@ -219,6 +219,15 @@ namespace Mastercam::IO::Interop {
 		}
 		static CHAIN* SelectionManager::GetNativeChain(Mastercam::Database::Chain^ chain)
 		{
+			//	SavedDirection(ChainDirectionType)
+			//	m_Area(Double)
+			//	m_Flat(Boolean)
+			//	m_Depth(Double)
+			//	m_Perimeter(Double)
+			//	m_ContainsSplines(Boolean)
+			//	m_FirstEntityId(Int32)
+			//	Data(CHAIN*)
+
 			System::Reflection::Pointer^ cPtr = NETHookApiReflection::GetFieldValue(chain, "Data");
 			if (cPtr)
 			{
@@ -229,7 +238,7 @@ namespace Mastercam::IO::Interop {
 		}
 
 
-		static int SelectionManager::Intersect(Mastercam::Database::Geometry^ GEO1, Mastercam::Database::Geometry^ GEO2) {
+		static int SelectionManager::Intersect(Mastercam::Database::Geometry^ GEO1, Mastercam::Database::Geometry^ GEO2, int color, int level) {
 
 			p_2di biasPt;
 			bool successful;
@@ -292,6 +301,8 @@ namespace Mastercam::IO::Interop {
 						auto newPoint = gcnew Mastercam::BasicGeometry::PointGeometry(); // creates new point
 						newPoint->Data.x = newPointGeo[0]; // pulls x cord from p_2d
 						newPoint->Data.y = newPointGeo[1]; // pulls y cord from p_2d
+						newPoint->Color = color;
+						newPoint->Level = level;
 						newPoint->Commit(); // saves new point to database
 						return newPoint->GetEntityID(); // sends new point GeoID back to NETHook side
 					}
@@ -319,10 +330,7 @@ namespace Mastercam::IO::Interop {
 			
 			return returnChain;
 		}
-		/// <summary> Construct a Chain from the supplied list of entities. </summary>
-		/// <param name="entities"> The (in order!) line and/or arc entities. </param>
-		/// <returns> The new chain if successful, else null. </returns>
-		/// static CHAIN* SelectionManager::CreateChain(std::vector<ent>& entities){
+
 		static CHAIN* SelectionManager::CreateChain(std::vector<ent>& entities)
 		{
 			CHAIN* chain;
@@ -366,6 +374,7 @@ namespace Mastercam::IO::Interop {
 
 			return newChains[0];
 		}
+		
 		static int SelectionManager::IntersectPoint(Mastercam::Database::Geometry^ GEO1, Mastercam::Database::Geometry^ GEO2) {
 			p_2di biasPt;
 			bool successful;
@@ -384,6 +393,16 @@ namespace Mastercam::IO::Interop {
 				tempEnt.u.li.e2 = firstEnt->u.li.e2.ConvertTo2d();
 				firstEntity.push_back(tempEnt);
 			}
+			if (firstEnt->id == A_ID) { // if first entity is an arc
+				gt tempEnt;
+				//converts arc data to GT data
+				tempEnt.id = 'A';
+				tempEnt.u.ar.c = firstEnt->u.ar.c.ConvertTo2d();
+				tempEnt.u.ar.r = firstEnt->u.ar.r;
+				tempEnt.u.ar.sa = firstEnt->u.ar.sa;
+				tempEnt.u.ar.sw = firstEnt->u.ar.sw;
+				firstEntity.push_back(tempEnt);
+			}
 
 			std::vector<gt> secondEntity;//GT List of second entity
 			ent secondNewGuy;
@@ -393,6 +412,16 @@ namespace Mastercam::IO::Interop {
 				tempEnt.id = 'L';
 				tempEnt.u.li.e1 = secondEnt->u.li.e1.ConvertTo2d();
 				tempEnt.u.li.e2 = secondEnt->u.li.e2.ConvertTo2d();
+				secondEntity.push_back(tempEnt);
+			}
+			if (secondEnt->id == A_ID) { // If second entity is an arc
+				gt tempEnt;
+				//converts arc data to GT data
+				tempEnt.id = 'A';
+				tempEnt.u.ar.c = secondEnt->u.ar.c.ConvertTo2d();
+				tempEnt.u.ar.r = secondEnt->u.ar.r;
+				tempEnt.u.ar.sa = secondEnt->u.ar.sa;
+				tempEnt.u.ar.sw = secondEnt->u.ar.sw;
 				secondEntity.push_back(tempEnt);
 			}
 
@@ -418,49 +447,31 @@ namespace Mastercam::IO::Interop {
 			}
 			return NULL;
 		}
-		static Mastercam::Database::Chain^ SelectionManager::ChainOffsetWithResult(Mastercam::Database::Chain^ chain, double distance, int color, int level, bool defined)
+		
+		static Mastercam::Database::Chain^ SelectionManager::ChainOffsetWithResult(Mastercam::Database::Chain^ chain, double distance, int color, int level)
 		{
 			Mastercam::Database::Chain^ resultChain;
-
-			if (chain){
-
-				auto pChain = GetNativeChain(chain);
+			if (chain) {
+				auto pChainPre = GetNativeChain(chain);
+				CHAIN** pChain = new CHAIN*;
+				copy_chain(pChainPre, pChain);
 				Cnc::XformOffsetChains::OffsetChainsParams offsetParams;
 				Cnc::XformOffsetChains::ResultMethod resultMethod;
-				//Cnc::XformOffsetChains::DepthMethod depthMethod;
 				Cnc::XformOffsetChains::TranslateDirection translateDirection;
-				//Cnc::XformOffsetChains::FilletCornerStyle filletCornerStyle;
 				resultMethod = Cnc::XformOffsetChains::ResultMethod::Copy ;
-				//depthMethod = Cnc::XformOffsetChains::DepthMethod::Incremental ;
-				if (defined == true) {translateDirection = Cnc::XformOffsetChains::TranslateDirection::DefinedSide;}
-				if (defined == false) {translateDirection = Cnc::XformOffsetChains::TranslateDirection::OppositeSide;}
-				//filletCornerStyle = Cnc::XformOffsetChains::FilletCornerStyle::Sharp ;
-
-				offsetParams.m_ResultMethod = resultMethod;            //!< ResultMethod
-				offsetParams.m_Number = 1;                           //!< Number
-				offsetParams.m_Distance = distance;                      //!< Distance
-				//offsetParams.m_Depth = 0;                         //!< Depth
-				//offsetParams.m_ContourDepth = 0;                  //!< Contour Depth
-				//offsetParams.m_AbsoluteDepth = 0;                 //!< Absolute Depth
-				//offsetParams.m_IncrementalDepth = 0;              //!< Incremental Depth
-				//offsetParams.m_DepthMethod = depthMethod;              //!< Depth Method
-				//offsetParams.m_Angle = 0;                         //!< Angle
-				offsetParams.m_Direction = translateDirection;         //!< Translate Direction
-				//offsetParams.m_FilletCorners = false;                   //!< Fillet Corners
-				//offsetParams.m_FilletCornerStyle = filletCornerStyle;  //!< Fillet Corner Style
-				//offsetParams.m_InfiniteLookAhead = false;               //!< Infinite Look Ahead
-				//offsetParams.m_Tolerance = 0.001;                     //!< Tolerance
-				//offsetParams.m_MaximumDepth = 0;                  //!< Maximum Depth
-				//offsetParams.m_AutoPreview = false;                     //!< Auto Preview
-				offsetParams.m_UseNewAttributeColor = true;            //!< true to use new color attribute
-				offsetParams.m_UseNewAttributeLevel = true;            //!< true to use new level attribute
-				offsetParams.m_ResultColor = color;                      //!< Result Color
-				offsetParams.m_Level = level;                            //!< Level
-				//offsetParams.m_SeparateByLevel = false;                 //!< Separate By Level
+				offsetParams.m_ResultMethod = resultMethod;        
+				offsetParams.m_Number = 1;                     
+				offsetParams.m_Distance = distance;                  
+				offsetParams.m_Direction = translateDirection;      
+				offsetParams.m_UseNewAttributeColor = true;           
+				offsetParams.m_UseNewAttributeLevel = true;            
+				offsetParams.m_ResultColor = color;                     
+				offsetParams.m_Level = level;                           
 
 				EptrArray entityArray;
 				List<int>^ GeoList = gcnew List<int>();
-				bool success = Cnc::XformOffsetChains::OffsetChains(pChain, offsetParams, entityArray);
+				bool success = Cnc::XformOffsetChains::OffsetChains(pChain[0], offsetParams, entityArray);
+
 				if (success == true) {
 					if (entityArray.GetSize() > 1) {
 						for (auto i = 0; i < entityArray.GetSize(); i++) {
@@ -503,6 +514,7 @@ namespace Mastercam::IO::Interop {
 			}
 			return successful;
 		}
+		
 		static List<int>^ SelectionManager::BreakArcAtPoint(Mastercam::Curves::ArcGeometry^ arc, Mastercam::BasicGeometry::PointGeometry^ point) {
 			
 			List<int>^ newGeoIDs = gcnew List<int>();
@@ -515,7 +527,7 @@ namespace Mastercam::IO::Interop {
 			DB_LIST_ENT_PTR resultGeoID1;
 			DB_LIST_ENT_PTR resultGeoID2;
 			short newSel = ALIVE_BIT;
-			MC_BYTE mc_byte = MC_WHITE;
+			MC_BYTE mc_byte = MC_LT_CYAN;
 			int newLevel = 75;
 			attributes newAttrib;
 			bool geoStored;
@@ -555,6 +567,9 @@ namespace Mastercam::IO::Interop {
 				if (geoStored == true) {
 					newGeoIDs->Add(resultGeoID2->eptr->ent_idn);
 				}
+			}
+			if (newGeoIDs->Count > 0) {
+				arc->Delete();
 			}
 			return newGeoIDs;
 		}
