@@ -4,6 +4,8 @@
 // <summary>Declares the SelectionManager class</summary>
 
 // This class demonstrates using Mastercam NET-Hook API and a C++ methods from a C++/CLI project.
+#include <fstream>
+#include <iostream>
 #include "NETHookApiReflection.h"
 #include "SolidsExtrude_CH.h"
 #include "math2_ch.h"
@@ -18,6 +20,8 @@
 #include "Chain_CH.h"
 #include "OffsetChains_CH.H"
 #include "DbLoIo_ch.h"
+#include <mutex>
+
 //#include "3dvars_ch.h"
 
 
@@ -27,6 +31,7 @@
 namespace Mastercam::IO::Interop {
 
 	using namespace System;
+	using namespace System::IO;
 	using namespace System::Collections::Generic;
 
 	// Namespaces we reference in the NET-Hook API
@@ -314,45 +319,39 @@ namespace Mastercam::IO::Interop {
 
 		static Mastercam::Database::Chain^ SelectionManager::ChainLinker (System::Collections::Generic::List<int>^ GeoList){
 
-
+			//
 			bool successful;
 			Mastercam::Database::Chain^ returnChain; // NETHook side chain
 			CHAIN* tempChain; // CLI side chain
 			ent entity; // blank entity
 			std::vector<ent> entities; // Blank vector list needed for CreateChain method
-			for (auto i=0;i<GeoList->Count;i++){
-			GetEntityByID(GeoList[i], entity, &successful); // Gets ent value and assigns to entity
+
+			for (auto i=0;i<GeoList->Count;i++){ //<-error
+
+			//GetEntityByID(GeoList[i], entity, &successful); // Gets ent value and assigns to entity
 			
-			entities.push_back(entity); // adds entity to vector list
+			//entities.push_back(entity); // adds entity to vector list
 			}
-			tempChain = SelectionManager::CreateChain(entities); // Sends Entity List to chain creator (in order)
-			returnChain = SelectionManager::GetNetChain(tempChain);
+			//tempChain = SelectionManager::CreateChain(entities); // Sends Entity List to chain creator (in order)
+			//returnChain = SelectionManager::GetNetChain(tempChain);
 			
 			return returnChain;
 		}
 
 		static CHAIN* SelectionManager::CreateChain(std::vector<ent>& entities)
 		{
-			CHAIN* chain;
-			short err = alloc_chain(&chain, FALSE /* partial*/);
-			bool result = (err == 0 && chain != nullptr);
-
-			if (result)
-			{
-				CHAIN_ENT* last_chain_ent = nullptr;
-				for (auto& entity : entities)
-				{
-					short errCode = add_curve_to_chain(&entity, 0, TRUE, 0, chain, &last_chain_ent);
-					if (errCode != CHAIN_OK) // bail out !
-					{
-						result = false;
-						break;
+			CHAIN* chain = nullptr;
+				short err = alloc_chain(&chain, FALSE /* partial*/);
+				bool result = (err == 0 && chain != nullptr);
+				if (result) {
+					CHAIN_ENT* last_chain_ent = nullptr;
+					for (auto& entity : entities) {
+						short errCode = add_curve_to_chain(&entity, 0, TRUE, 0, chain, &last_chain_ent);
 					}
 				}
-			}
-
-			return (result ? chain : nullptr);
+			return chain;
 		}
+
 
 		static Mastercam::Database::Chain^ SelectionManager::GetNetChain(CHAIN* chain)
 		{
@@ -450,44 +449,51 @@ namespace Mastercam::IO::Interop {
 		
 		static Mastercam::Database::Chain^ SelectionManager::ChainOffsetWithResult(Mastercam::Database::Chain^ chain, double distance, int color, int level, int offsetDirection)
 		{
-			Mastercam::Database::Chain^ resultChain;
-			if (chain) {
-				auto pChainPre = GetNativeChain(chain);
-				CHAIN** pChain = new CHAIN*;
-				copy_chain(pChainPre, pChain);
-				Cnc::XformOffsetChains::OffsetChainsParams offsetParams;
-				Cnc::XformOffsetChains::TranslateDirection direction;
-				offsetParams.m_FilletCorners = true;
-				offsetParams.m_FilletCornerStyle = Cnc::XformOffsetChains::FilletCornerStyle::All;
-				offsetParams.m_ResultMethod = Cnc::XformOffsetChains::ResultMethod::Copy;
-				offsetParams.m_Number = 1;                     
-				offsetParams.m_Distance = distance;            
-				offsetParams.m_Direction = direction;
-				offsetParams.m_UseNewAttributeColor = true;           
-				offsetParams.m_UseNewAttributeLevel = true;            
-				offsetParams.m_ResultColor = color;                     
-				offsetParams.m_Level = level;
-				if (offsetDirection == 0) {
-					offsetParams.m_Direction = Cnc::XformOffsetChains::TranslateDirection::DefinedSide;
-				}
-				if (offsetDirection == 1) {
-					offsetParams.m_Direction = Cnc::XformOffsetChains::TranslateDirection::OppositeSide;
-				}
-				if (offsetDirection == 2) {
-					offsetParams.m_Direction = Cnc::XformOffsetChains::TranslateDirection::BothSides;
-				}
-				EptrArray entityArray;
-				List<int>^ GeoList = gcnew List<int>();
-				bool success = Cnc::XformOffsetChains::OffsetChains(pChain[0], offsetParams, entityArray);
-
-				if (success == true) {
-					if (entityArray.GetSize() > 1) {
-						for (auto i = 0; i < entityArray.GetSize(); i++) {
-							GeoList->Add(entityArray[i]->eptr->ent_idn);
-						}
+			Mastercam::Database::Chain^ resultChain = nullptr;
+			try {
+				if (chain) {
+					auto pChainPre = GetNativeChain(chain);
+					//number_of_chains(pChainPre);
+					CHAIN** pChain = nullptr;
+					if (pChainPre != nullptr) {
+						copy_chain(pChainPre, pChain);  // <- memory issue
 					}
-					resultChain = ChainLinker(GeoList);
+					Cnc::XformOffsetChains::OffsetChainsParams offsetParams;
+					Cnc::XformOffsetChains::TranslateDirection direction;
+					offsetParams.m_FilletCorners = false;
+					offsetParams.m_ResultMethod = Cnc::XformOffsetChains::ResultMethod::Copy;
+					offsetParams.m_Number = 1;
+					offsetParams.m_Distance = distance;
+					offsetParams.m_Direction = direction;
+					offsetParams.m_UseNewAttributeColor = true;
+					offsetParams.m_UseNewAttributeLevel = true;
+					offsetParams.m_ResultColor = color;
+					offsetParams.m_Level = level;
+					if (offsetDirection == 0) {
+						offsetParams.m_Direction = Cnc::XformOffsetChains::TranslateDirection::DefinedSide;
+					}
+					if (offsetDirection == 1) {
+						offsetParams.m_Direction = Cnc::XformOffsetChains::TranslateDirection::OppositeSide;
+					}
+					if (offsetDirection == 2) {
+						offsetParams.m_Direction = Cnc::XformOffsetChains::TranslateDirection::BothSides;
+					}
+					EptrArray entityArray;
+					List<int>^ GeoList = gcnew List<int>();
+					bool success = Cnc::XformOffsetChains::OffsetChains(pChain[0], offsetParams, entityArray);
+					if (success == true) {
+						if (entityArray.GetSize() > 1) {
+							for (auto i = 0; i < entityArray.GetSize(); i++) {
+								GeoList->Add(entityArray[i]->eptr->ent_idn);
+							}
+						}
+						resultChain = ChainLinker(GeoList);
+						GeoList->Clear();
+					}
 				}
+			}
+			catch (Exception^ ex) {
+				Windows::Forms::MessageBox::Show("An error occurred: " + ex->Message, "Error");
 			}
 			return resultChain;
 		}
@@ -580,6 +586,53 @@ namespace Mastercam::IO::Interop {
 				arc->Delete();
 			}
 			return newGeoIDs;
+		}
+		
+		static Mastercam::Database::Chain^ SelectionManager::EntityOffsetWithResult(Geometry^ geo, double distance, int color, int level, int offsetDirection)
+		{
+			Mastercam::Database::Chain^ resultChain = nullptr;
+
+			auto pEnt = static_cast<ent*>(std::malloc(sizeof(ent)));
+			new (pEnt) ent();
+			pEnt->ent_idn=(geo->GetEntityID());
+			CHAIN* pChain = nullptr;
+			if (pEnt) {
+				bool successful;
+				auto firstEnt = std::make_unique<ent>();
+				GetEntityByID(pEnt->ent_idn, *firstEnt, &successful);//#include "Assoc_CH.h"
+				if (successful) {
+					std::vector<ent> entities; // Blank vector list needed for CreateChain method
+					entities.push_back(*firstEnt); // add the first entity to the vector
+					pChain = SelectionManager::CreateChain(entities); // create a chain from the entities
+
+					Cnc::XformOffsetChains::OffsetChainsParams offsetParams;
+					Cnc::XformOffsetChains::TranslateDirection direction;
+					offsetParams.m_FilletCorners = false;
+					offsetParams.m_ResultMethod = Cnc::XformOffsetChains::ResultMethod::Copy;
+					offsetParams.m_Number = 1;
+					offsetParams.m_Distance = distance;
+					offsetParams.m_Direction = direction;
+					offsetParams.m_UseNewAttributeColor = true;
+					offsetParams.m_UseNewAttributeLevel = true;
+					offsetParams.m_ResultColor = color;
+					offsetParams.m_Level = level;
+					EptrArray entityArray;
+					List<int>^ GeoList = gcnew List<int>();
+					bool success = Cnc::XformOffsetChains::OffsetChains(pChain, offsetParams, entityArray);
+					if (success == true) {
+						if (entityArray.GetSize() > 1) {
+							for (auto i = 0; i < entityArray.GetSize(); i++) {
+								GeoList->Add(entityArray[i]->eptr->ent_idn);
+							}
+						}
+						resultChain = ChainLinker(GeoList);
+						GeoList->Clear();
+					}
+				}
+			}
+			pEnt->~ent();
+			std::free(pEnt);
+			return resultChain;
 		}
 	};
 }
