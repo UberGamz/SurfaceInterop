@@ -33,6 +33,8 @@ namespace Mastercam::IO::Interop {
 	using namespace System;
 	using namespace System::IO;
 	using namespace System::Collections::Generic;
+	using namespace System::Threading;
+
 
 	// Namespaces we reference in the NET-Hook API
 	using namespace Mastercam::App::Types;
@@ -45,24 +47,7 @@ namespace Mastercam::IO::Interop {
 	public ref class SelectionManager
 	{
 	public:
-		/// <summary> This method create a geometry (circle). </summary>
-		///
-		/// <returns> ID of created geometry. </returns>
-		static int SelectionManager::CreateGeometry();
-
-
-		/// <summary> This method retrieves the entity of the geometry and do a translation. </summary>
-		///
-		/// <param name="geom"> The geometry selected by the user. </param>
-		///
-		/// <returns> True if it succeeds, false if it fails. </returns>
-		//static bool SelectionManager::TranslateSelectedGeometry (int geometryId);
-
-		/// <summary> This method allows to move the entity of the geometry selected. </summary>
-		///
-		/// <returns> True if it succeeds, false if it fails. </returns>
 		static bool SelectionManager::MoveEntity(ent* entity);
-
 		static System::Collections::Generic::List<int>^ GetOperations(int opCode)
 		{
 
@@ -241,8 +226,6 @@ namespace Mastercam::IO::Interop {
 
 			return nullptr;
 		}
-
-
 		static int SelectionManager::Intersect(Mastercam::Database::Geometry^ GEO1, Mastercam::Database::Geometry^ GEO2, int color, int level) {
 
 			p_2di biasPt;
@@ -316,8 +299,73 @@ namespace Mastercam::IO::Interop {
 			}
 			return successful;
 		};
+		static bool SelectionManager::IntersectCheck(Mastercam::Database::Geometry^ GEO1, Mastercam::Database::Geometry^ GEO2) {
 
-		static Mastercam::Database::Chain^ SelectionManager::ChainLinker (System::Collections::Generic::List<int>^ GeoList){
+			p_2di biasPt;
+			bool successful = false;
+			auto firstEnt = std::make_unique<ent>();
+			auto secondEnt = std::make_unique<ent>();
+			GetEntityByID(GEO1->GetEntityID(), *firstEnt, &successful);//#include "Assoc_CH.h"
+			GetEntityByID(GEO2->GetEntityID(), *secondEnt, &successful);//#include "Assoc_CH.h"
+
+			std::vector<gt> firstEntity;//GT List of first entity
+			ent firstNewGuy;
+			if (firstEnt->id == L_ID) { // If first entity is a line
+				gt tempEnt;
+				//converts line data to GT data
+				tempEnt.id = 'L';
+				tempEnt.u.li.e1 = firstEnt->u.li.e1.ConvertTo2d();
+				tempEnt.u.li.e2 = firstEnt->u.li.e2.ConvertTo2d();
+				firstEntity.push_back(tempEnt);
+			}
+			if (firstEnt->id == A_ID) { // if first entity is an arc
+				gt tempEnt;
+				//converts arc data to GT data
+				tempEnt.id = 'A';
+				tempEnt.u.ar.c = firstEnt->u.ar.c.ConvertTo2d();
+				tempEnt.u.ar.r = firstEnt->u.ar.r;
+				tempEnt.u.ar.sa = firstEnt->u.ar.sa;
+				tempEnt.u.ar.sw = firstEnt->u.ar.sw;
+				firstEntity.push_back(tempEnt);
+			}
+
+			std::vector<gt> secondEntity;//GT List of second entity
+			ent secondNewGuy;
+			if (secondEnt->id == L_ID) { // If second entity is a line
+				gt tempEnt;
+				//converts line data to GT data
+				tempEnt.id = 'L';
+				tempEnt.u.li.e1 = secondEnt->u.li.e1.ConvertTo2d();
+				tempEnt.u.li.e2 = secondEnt->u.li.e2.ConvertTo2d();
+				secondEntity.push_back(tempEnt);
+			}
+			if (secondEnt->id == A_ID) { // If second entity is an arc
+				gt tempEnt;
+				//converts arc data to GT data
+				tempEnt.id = 'A';
+				tempEnt.u.ar.c = secondEnt->u.ar.c.ConvertTo2d();
+				tempEnt.u.ar.r = secondEnt->u.ar.r;
+				tempEnt.u.ar.sa = secondEnt->u.ar.sa;
+				tempEnt.u.ar.sw = secondEnt->u.ar.sw;
+				secondEntity.push_back(tempEnt);
+			}
+
+			for (const auto& firstEnt : firstEntity) {
+				for (const auto& secondEnt : secondEntity) {
+					p_2d intersectPts;
+					short nIntersections = 0;
+					bool success = false;
+
+					ints_on_gt(&firstEnt, &secondEnt, biasPt, &intersectPts, &nIntersections, MTOL, &success);
+					if (success) {
+						return success;
+					}
+					else { return false; };
+				}
+			}
+			return successful;
+		};
+		static Chain^ SelectionManager::ChainLinker (System::Collections::Generic::List<int>^ GeoList){
 
 			//
 			bool successful;
@@ -328,16 +376,15 @@ namespace Mastercam::IO::Interop {
 
 			for (auto i=0;i<GeoList->Count;i++){ //<-error
 
-			//GetEntityByID(GeoList[i], entity, &successful); // Gets ent value and assigns to entity
+			GetEntityByID(GeoList[i], entity, &successful); // Gets ent value and assigns to entity
 			
-			//entities.push_back(entity); // adds entity to vector list
+			entities.push_back(entity); // adds entity to vector list
 			}
-			//tempChain = SelectionManager::CreateChain(entities); // Sends Entity List to chain creator (in order)
-			//returnChain = SelectionManager::GetNetChain(tempChain);
+			tempChain = SelectionManager::CreateChain(entities); // Sends Entity List to chain creator (in order)
+			returnChain = SelectionManager::GetNetChain(tempChain);
 			
 			return returnChain;
 		}
-
 		static CHAIN* SelectionManager::CreateChain(std::vector<ent>& entities)
 		{
 			CHAIN* chain = nullptr;
@@ -351,9 +398,7 @@ namespace Mastercam::IO::Interop {
 				}
 			return chain;
 		}
-
-
-		static Mastercam::Database::Chain^ SelectionManager::GetNetChain(CHAIN* chain)
+		static Chain^ SelectionManager::GetNetChain(CHAIN* chain)
 		{
 			auto newChains = gcnew List<Chain^>();
 
@@ -373,7 +418,6 @@ namespace Mastercam::IO::Interop {
 
 			return newChains[0];
 		}
-		
 		static int SelectionManager::IntersectPoint(Mastercam::Database::Geometry^ GEO1, Mastercam::Database::Geometry^ GEO2) {
 			p_2di biasPt;
 			bool successful;
@@ -446,7 +490,6 @@ namespace Mastercam::IO::Interop {
 			}
 			return NULL;
 		}
-		
 		static Mastercam::Database::Chain^ SelectionManager::ChainOffsetWithResult(Mastercam::Database::Chain^ chain, double distance, int color, int level, int offsetDirection)
 		{
 			Mastercam::Database::Chain^ resultChain = nullptr;
@@ -454,7 +497,7 @@ namespace Mastercam::IO::Interop {
 				if (chain) {
 					auto pChainPre = GetNativeChain(chain);
 					//number_of_chains(pChainPre);
-					CHAIN** pChain = nullptr;
+					CHAIN** pChain = new CHAIN*;
 					if (pChainPre != nullptr) {
 						copy_chain(pChainPre, pChain);  // <- memory issue
 					}
@@ -497,7 +540,6 @@ namespace Mastercam::IO::Interop {
 			}
 			return resultChain;
 		}
-
 		static bool SelectionManager::PointOnArc(Mastercam::Curves::ArcGeometry^ arc, Mastercam::BasicGeometry::PointGeometry^ point) {
 
 			bool successful = false;
@@ -528,7 +570,6 @@ namespace Mastercam::IO::Interop {
 			}
 			return successful;
 		}
-		
 		static List<int>^ SelectionManager::BreakArcAtPoint(Mastercam::Curves::ArcGeometry^ arc, Mastercam::BasicGeometry::PointGeometry^ point) {
 			
 			List<int>^ newGeoIDs = gcnew List<int>();
@@ -587,24 +628,19 @@ namespace Mastercam::IO::Interop {
 			}
 			return newGeoIDs;
 		}
-		
 		static Mastercam::Database::Chain^ SelectionManager::EntityOffsetWithResult(Geometry^ geo, double distance, int color, int level, int offsetDirection)
 		{
 			Mastercam::Database::Chain^ resultChain = nullptr;
 
-			auto pEnt = static_cast<ent*>(std::malloc(sizeof(ent)));
-			new (pEnt) ent();
-			pEnt->ent_idn=(geo->GetEntityID());
 			CHAIN* pChain = nullptr;
-			if (pEnt) {
+			if (geo) {
 				bool successful;
 				auto firstEnt = std::make_unique<ent>();
-				GetEntityByID(pEnt->ent_idn, *firstEnt, &successful);//#include "Assoc_CH.h"
+				GetEntityByID(geo->GetEntityID(), * firstEnt, & successful);//#include "Assoc_CH.h"
 				if (successful) {
 					std::vector<ent> entities; // Blank vector list needed for CreateChain method
 					entities.push_back(*firstEnt); // add the first entity to the vector
 					pChain = SelectionManager::CreateChain(entities); // create a chain from the entities
-
 					Cnc::XformOffsetChains::OffsetChainsParams offsetParams;
 					Cnc::XformOffsetChains::TranslateDirection direction;
 					offsetParams.m_FilletCorners = false;
@@ -616,6 +652,15 @@ namespace Mastercam::IO::Interop {
 					offsetParams.m_UseNewAttributeLevel = true;
 					offsetParams.m_ResultColor = color;
 					offsetParams.m_Level = level;
+					if (offsetDirection == 0) {
+						offsetParams.m_Direction = Cnc::XformOffsetChains::TranslateDirection::DefinedSide;
+					}
+					if (offsetDirection == 1) {
+						offsetParams.m_Direction = Cnc::XformOffsetChains::TranslateDirection::OppositeSide;
+					}
+					if (offsetDirection == 2) {
+						offsetParams.m_Direction = Cnc::XformOffsetChains::TranslateDirection::BothSides;
+					}
 					EptrArray entityArray;
 					List<int>^ GeoList = gcnew List<int>();
 					bool success = Cnc::XformOffsetChains::OffsetChains(pChain, offsetParams, entityArray);
@@ -625,13 +670,11 @@ namespace Mastercam::IO::Interop {
 								GeoList->Add(entityArray[i]->eptr->ent_idn);
 							}
 						}
-						resultChain = ChainLinker(GeoList);
+						//resultChain = ChainLinker(GeoList);
 						GeoList->Clear();
 					}
 				}
 			}
-			pEnt->~ent();
-			std::free(pEnt);
 			return resultChain;
 		}
 	};
